@@ -1,5 +1,5 @@
 import { expect, mock, test } from 'claude-code/testing'
-import type { On, ThemeSetArgs } from 'claude-code'
+import type { On, RenderSurface, ThemeSetArgs } from 'claude-code'
 
 const COMMAND = {
   command: 'vigil',
@@ -15,8 +15,9 @@ const BACKDROP = {
 } as const
 
 /** The engine beneath the mod: themes set, commands registered, a store and a clock. */
-function engine(on: On, stored: Record<string, unknown> = {}, drawsThemes = true) {
+function engine(on: On, stored: Record<string, unknown> = {}, surfaces: readonly RenderSurface[] = ['desktop']) {
   const themes: ThemeSetArgs[] = []
+  const drawsThemes = surfaces.includes('desktop') || surfaces.includes('mobile')
   on('theme.set', (_, e) => {
     themes.push(e)
 
@@ -26,7 +27,7 @@ function engine(on: On, stored: Record<string, unknown> = {}, drawsThemes = true
         : { isDrawn: false, reason: 'no attached client draws themes' },
     }
   })
-  on('session.surfaces', () => ({ value: drawsThemes ? ['desktop'] : [] }))
+  on('session.surfaces', () => ({ value: surfaces }))
   on('command.register', () => ({ value: { command: 'vigil' } }))
   on('session.start', (_, e) => ({ cwd: e.cwd }))
   mock.store(on, stored)
@@ -87,8 +88,20 @@ test('/vigil takes a word: plain is a gradient, an unknown word changes nothing'
 
   const count = themes.length
   const help = await $.command.run({ ...COMMAND, args: 'disco' })
-  expect(help.text).toContain('animated, still, plain')
+  expect(help.text).toContain('/vigil animated, /vigil still or /vigil plain picks one.')
+  expect(help.text).toContain('/vigil terminal')
   expect(themes.length).toBe(count)
+})
+
+test('a word in brackets, as the hint shows it, still counts', async ($, on) => {
+  const { themes } = engine(on)
+  await $.session.start(START)
+
+  await $.command.run({ ...COMMAND, args: '[still]' })
+  expect(themes.at(-1)?.backdrop).toMatchObject({ scene: 'vigil-still' })
+
+  await $.command.run({ ...COMMAND, args: ' [ Animated ] ' })
+  expect(themes.at(-1)?.backdrop).toMatchObject({ scene: 'vigil-animated' })
 })
 
 test('/vigil status says what is attached and whether the theme draws', async ($, on) => {
@@ -96,21 +109,56 @@ test('/vigil status says what is attached and whether the theme draws', async ($
   await $.session.start(START)
   const shown = await $.command.run({ ...COMMAND, args: 'status' })
   expect(shown.text).toContain('Vigil status: the animated backdrop.')
-  expect(shown.text).toContain('Surfaces attached to this session: desktop.')
-  expect(shown.text).toContain('The engine reports the theme as drawn.')
+  expect(shown.text).toContain('Attached to this session: desktop.')
+  expect(shown.text).toContain('The theme is drawn.')
+  expect(shown.text).not.toContain('/theme')
   expect(shown.isTextDisplayOnly).toBe(true)
 })
 
-test('with no app that draws themes, /vigil says so and why', async ($, on) => {
-  engine(on, {}, false)
+test('in a terminal, /vigil points to /theme for the colors and the apps for the city', async ($, on) => {
+  engine(on, {}, ['terminal'])
   await $.session.start(START)
-  const status = await $.command.run({ ...COMMAND, args: 'status' })
-  expect(status.text).toContain('Surfaces attached to this session: none.')
-  expect(status.text).toContain('No desktop or mobile app is attached')
-  expect(status.text).toContain('not drawn: no attached client draws themes')
 
   const flipped = await $.command.run({ ...COMMAND, args: '' })
-  expect(flipped.text).toContain('Nothing here is drawing it (no attached client draws themes)')
+  expect(flipped.text).toContain('the city holds still')
+  expect(flipped.text).toContain("A terminal can't draw the city, only colors: run /theme and pick Vigil")
+
+  const status = await $.command.run({ ...COMMAND, args: 'status' })
+  expect(status.text).toContain('Attached to this session: terminal.')
+  expect(status.text).toContain('The theme is not drawn: no attached client draws themes')
+  expect(status.text).toContain('run /theme and pick Vigil')
+})
+
+test('with nothing attached that draws, /vigil names the apps that do', async ($, on) => {
+  engine(on, {}, [])
+  await $.session.start(START)
+  const status = await $.command.run({ ...COMMAND, args: 'status' })
+  expect(status.text).toContain('Attached to this session: nothing that draws.')
+  expect(status.text).toContain('neither is attached to this session')
+})
+
+test('/vigil terminal picks the Vigil terminal theme where the setting allows it', async ($, on) => {
+  engine(on, {}, ['terminal'])
+  const asked: unknown[] = []
+  on('config.set', (_, e) => {
+    asked.push({ key: e.key, value: e.value })
+
+    return { value: e.value }
+  })
+  await $.session.start(START)
+
+  const done = await $.command.run({ ...COMMAND, args: 'terminal' })
+  expect(asked).toEqual([{ key: 'theme', value: 'custom:vigil:vigil' }])
+  expect(done.text).toContain("Vigil's colors are on in this terminal.")
+})
+
+test('/vigil terminal sends the person to /theme when the setting refuses', async ($, on) => {
+  engine(on, {}, ['terminal'])
+  on('config.set', () => ({ deny: 'For custom themes, use /theme.' }))
+  await $.session.start(START)
+
+  const told = await $.command.run({ ...COMMAND, args: 'terminal' })
+  expect(told.text).toContain('run /theme and pick Vigil')
 })
 
 test('a stored choice that is not a mode falls back to the moving city', async ($, on) => {

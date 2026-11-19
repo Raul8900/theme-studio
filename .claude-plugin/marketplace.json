@@ -8,7 +8,7 @@
     {
       "name": "vigil",
       "source": "./themes/vigil",
-      "description": "A dark theme for a city that needs watching: storm clouds, a searchlight, rain and a gothic skyline, animated or still."
+      "description": "A dark theme for a city that needs watching: storm clouds, a searchlight, rain and a gothic skyline, animated or still, with colors for the terminal too."
     }
   ]
 }

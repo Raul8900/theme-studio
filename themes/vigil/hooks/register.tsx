@@ -31,6 +31,23 @@ const SAID: Record<VigilMode, string> = {
   plain: 'Vigil: no picture, just the night sky. The colors stay.',
 }
 
+/** The terminal palette this plugin ships in themes/vigil.json, as /theme stores a choice of it. */
+const TERMINAL_THEME = 'custom:vigil:vigil'
+
+const HELP = [
+  '/vigil switches between the animated and the still city.',
+  '/vigil animated, /vigil still or /vigil plain picks one.',
+  "/vigil terminal turns on Vigil's colors in a terminal.",
+  '/vigil status says what is drawing it.',
+].join('\n')
+
+/** Where the person can see the city, when nothing attached here draws it. */
+function elsewhere(surfaces: readonly string[]): string {
+  return surfaces.includes('terminal')
+    ? "A terminal can't draw the city, only colors: run /theme and pick Vigil, or /vigil terminal. The city itself draws in the Claude desktop and mobile apps."
+    : 'The city draws in the Claude desktop and mobile apps, and neither is attached to this session.'
+}
+
 /**
  * Keeps the last few things that happened to the theme in the store, for
  * `/vigil status` and for finding out why an app shows nothing.
@@ -68,8 +85,8 @@ export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     await $.command.register({
       name: 'vigil',
-      description: 'Switch the Vigil backdrop between animated and still (or plain, or status)',
-      argumentHint: '[animated | still | plain | status]',
+      description: 'Switch the Vigil backdrop between animated and still; terminal for its colors in a terminal',
+      argumentHint: '[animated|still|plain|terminal|status]',
     })
     const stored = await $.store.get('mode')
     const current: VigilMode = isMode(stored) ? stored : 'animated'
@@ -102,25 +119,39 @@ export const register: Register = on => {
   })
 
   on('command.run', { command: 'vigil' }, async ($, e) => {
-    const word = e.args.trim().toLowerCase()
+    // `[still]` reads as `still`: the hint shows the words in brackets.
+    const word = e.args.toLowerCase().replace(/[[\]<>(){}"'`]/g, ' ').trim()
     const current = await read($, mode)
+    const surfaces = await $.session.surfaces()
+
+    if (word === 'terminal') {
+      // /theme is where a custom theme is normally picked; where the setting
+      // takes it from a plugin too, this saves the person a step.
+      const answer = await $.config
+        .set({ key: 'theme', value: TERMINAL_THEME })
+        .catch((error: unknown) => ({ deny: String(error) }))
+      await note($, 'terminal', answer.deny === undefined ? { isSet: true } : { isSet: false, reason: answer.deny })
+
+      return {
+        text: answer.deny === undefined
+          ? "Vigil's colors are on in this terminal. To change back, pick another theme in /theme. The city itself draws in the Claude desktop and mobile apps."
+          : "To use Vigil's colors in this terminal, run /theme and pick Vigil. The city itself draws in the Claude desktop and mobile apps.",
+        isTextDisplayOnly: true,
+      }
+    }
 
     if (word === 'status') {
-      const surfaces = await $.session.surfaces()
       const result = await $.theme.set(lookFor(current))
       await note($, 'status', { mode: current, surfaces, ...outcome(result) })
-      const apps = surfaces.filter(s => s === 'desktop' || s === 'mobile')
       const drawnBy = Object.entries(asked).map(([surface, n]) => `${surface} ${n}`).join(', ')
 
       return {
         text: [
           `Vigil status: the ${current} backdrop.`,
-          `Surfaces attached to this session: ${surfaces.length === 0 ? 'none' : surfaces.join(', ')}.`,
-          apps.length === 0
-            ? 'No desktop or mobile app is attached, and those are the only places a theme draws.'
-            : `Attached apps that can draw a theme: ${apps.join(', ')}.`,
-          result.isDrawn ? 'The engine reports the theme as drawn.' : `The engine reports the theme as not drawn: ${result.reason}`,
+          `Attached to this session: ${surfaces.length === 0 ? 'nothing that draws' : surfaces.join(', ')}.`,
+          result.isDrawn ? 'The theme is drawn.' : `The theme is not drawn: ${result.reason}`,
           `Backdrop drawings asked for since the mod loaded: ${drawnBy === '' ? 'none' : drawnBy}.`,
+          ...(result.isDrawn ? [] : [elsewhere(surfaces)]),
         ].join('\n'),
         isTextDisplayOnly: true,
       }
@@ -128,17 +159,11 @@ export const register: Register = on => {
     const next = word === '' || word === 'toggle' ? flipped(current) : WORDS[word]
 
     if (next === undefined) {
-      return {
-        text: 'Vigil backdrops: animated, still, plain. /vigil on its own switches between animated and still; /vigil status says what is drawing it.',
-        isTextDisplayOnly: true,
-      }
+      return { text: HELP, isTextDisplayOnly: true }
     }
     const set = await show($, next)
-    const where = set.isDrawn
-      ? ''
-      : ` Nothing here is drawing it (${set.reason}). It shows in the Claude desktop and mobile apps.`
 
-    return { text: SAID[next] + where, isTextDisplayOnly: true }
+    return { text: set.isDrawn ? SAID[next] : `${SAID[next]}\n${elsewhere(surfaces)}`, isTextDisplayOnly: true }
   })
 
   // A row in the desktop app's right-click menu, on a click that isn't on a
