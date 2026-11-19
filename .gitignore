@@ -1,0 +1,7 @@
+# Written by Claude Code each time it loads a theme from a folder it hot-reloads.
+.claude-plugin/types/
+# Operating system and editor leftovers.
+.DS_Store
+*~
+*.swp
+*.log

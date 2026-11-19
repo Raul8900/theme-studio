@@ -1,0 +1,9 @@
+{
+  "name": "vigil",
+  "version": "1.0.0",
+  "description": "A dark theme for a city that needs watching: storm clouds, a searchlight, rain and a gothic skyline, animated or still (/vigil to switch).",
+  "author": { "name": "Raul8900" },
+  "repository": "https://github.com/Raul8900/theme-studio",
+  "license": "MIT",
+  "types": "./types/index.d.ts"
+}
