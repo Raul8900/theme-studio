@@ -1,6 +1,6 @@
 # Vigil
 
-A dark theme for Claude Code, for a city that needs watching. Storm clouds hang low over a gothic skyline, and a searchlight lights the cloud base in gold. Rain falls through the beam, bats cross the light, and a stone gargoyle looks down from a tower at the edge of the frame.
+A dark theme for Claude Code, for a city that needs watching. Storm clouds hang low over a gothic skyline, and a searchlight lights the cloud base in gold. Rain falls through the beam, and bats cross the light.
 
 ![Vigil: a gothic city at night, a searchlight on the clouds](../../previews/vigil/vigil-scene.jpg)
 

@@ -214,22 +214,12 @@ const flockMarkup = flock
     `<g transform="translate(${x} ${y}) scale(${s})"><g class="flap f${i}"><path d="${'#BAT'}" vector-effect="non-scaling-stroke"/></g></g>`)
   .join('')
 
-// A stone gargoyle crouched on the tower's ledge, in a local 200 x 170 box:
-// ledge top at y 150, tower wall at x 180. Facing left, over the city.
-const LEDGE = {
-  gargoyle: 'M50 150L49 136C48.5 128 45.5 121.5 40.5 117L43 104L37 111.5L34.5 101L31.5 112.5C26.5 112.5 21.5 115 18 119.5L7 120.5L14 125L6 128L16 130C17.5 135 20.5 139.5 25 142L22 150ZM40.5 118L53 102.5L51 113L60 106.5L53.5 125Z',
-  cornice: 'M104 150H200V157H104ZM110 157H200V163H110Z',
-}
-
-// The tower at the right edge, with the gargoyle on its ledge.
+// The tower at the right edge.
 const tower = [
   'M236 1120V548L238 540V530L240 500L242 530V540L246 548H252L288 418L324 548H340V1120Z', // body, roof, left pinnacle
   'M285 420L288 386L291 420Z', // finial
   'M230 742V734H240V742Z', // lower cornice
 ]
-// Local (180, 150), where the ledge meets the wall, lands on the tower at (240, 614).
-const FIG_S = 0.9
-const FIG_T = [240 - 180 * FIG_S, 614 - 150 * FIG_S]
 const towerWindows = 'M262 640V612Q266 602 270 612V640ZM300 690V660Q304 650 308 660V690ZM268 820V792Q272 782 276 792V820Z'
 
 // ---------------------------------------------------------------- clouds
@@ -331,7 +321,6 @@ ${mid.beacons.slice(0, 4).map((b, i) => beacon(b, i + 1)).join('')}
 <svg width="100%" height="100%" viewBox="0 0 320 1000" preserveAspectRatio="xMaxYMax meet" overflow="visible">
 <path d="${tower.join('')}" fill="#030406"/>
 <path d="${towerWindows}" fill="#f0a848" opacity=".5"/>
-<g transform="translate(${n(FIG_T[0])} ${n(FIG_T[1])}) scale(${FIG_S})" fill="#020305"><path transform="translate(112 0)" d="${LEDGE.gargoyle}"/><path d="${LEDGE.cornice}"/></g>
 </svg>`,
   rain: `<svg width="100%" height="100%" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice"><g transform="rotate(12 200 200)"><g class="ra"><rect x="-300" y="-520" width="1000" height="1320" fill="url(#rainA)" opacity=".15"/></g><g class="rb"><rect x="-300" y="-700" width="1000" height="1500" fill="url(#rainB)" opacity=".12"/></g></g></svg>`,
   tail: `<rect width="100%" height="100%" fill="url(#vig)"/>`,
