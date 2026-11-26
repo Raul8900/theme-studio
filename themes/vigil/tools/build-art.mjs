@@ -111,7 +111,7 @@ const archEdges = [...belfry, ...lower].map(([x, y, w, h]) => lancet(x, y, w, h)
 // hands are placed at the real time when the scene is drawn (HOUR_AT and
 // MINUTE_AT stand in for their angles) and turn on from there: CLOCK_MOTION.
 const CX = TC + TOWER_SHIFT
-const CY = 655
+const CY = 651
 const CR = 36
 const HOUR_AT = `rotate(-1001 ${CX} ${CY})`
 const MINUTE_AT = `rotate(-1002 ${CX} ${CY})`
@@ -215,7 +215,7 @@ const defs = `<defs>
 <linearGradient id="flood" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#e8a24a" stop-opacity=".46"/><stop offset=".55" stop-color="#d08a3c" stop-opacity=".2"/><stop offset="1" stop-color="#b87830" stop-opacity="0"/></linearGradient>
 <radialGradient id="rose"><stop offset="0" stop-color="#ffd890"/><stop offset=".45" stop-color="#e09a48"/><stop offset=".75" stop-color="#b84a4a"/><stop offset="1" stop-color="#4b5fb4"/></radialGradient>
 <radialGradient id="clockface" cx=".45" cy=".42" r=".62"><stop offset="0" stop-color="#fff3d2"/><stop offset=".55" stop-color="#f6d796"/><stop offset=".88" stop-color="#e2ad5e"/><stop offset="1" stop-color="#b9813a"/></radialGradient><linearGradient id="gilt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f2d08a"/><stop offset=".45" stop-color="#b8862e"/><stop offset=".7" stop-color="#e6c06e"/><stop offset="1" stop-color="#7a5418"/></linearGradient>
-<radialGradient id="wash" gradientUnits="userSpaceOnUse" cx="289" cy="655" r="120"><stop offset="0" stop-color="#e9a451" stop-opacity=".14"/><stop offset=".55" stop-color="#e9a451" stop-opacity=".05"/><stop offset="1" stop-color="#e9a451" stop-opacity="0"/></radialGradient>
+<radialGradient id="wash" gradientUnits="userSpaceOnUse" cx="289" cy="651" r="120"><stop offset="0" stop-color="#e9a451" stop-opacity=".14"/><stop offset=".55" stop-color="#e9a451" stop-opacity=".05"/><stop offset="1" stop-color="#e9a451" stop-opacity="0"/></radialGradient>
 <linearGradient id="mist" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fa3c0" stop-opacity="0"/><stop offset=".5" stop-color="#8fa3c0" stop-opacity=".08"/><stop offset="1" stop-color="#8fa3c0" stop-opacity="0"/></linearGradient>
 <radialGradient id="vig" cx=".5" cy=".42" r=".78"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".55"/></radialGradient>
 <radialGradient id="bk"><stop offset="0" stop-color="#ff5a4a"/><stop offset=".35" stop-color="#ff3b30" stop-opacity=".55"/><stop offset="1" stop-color="#ff3b30" stop-opacity="0"/></radialGradient>
