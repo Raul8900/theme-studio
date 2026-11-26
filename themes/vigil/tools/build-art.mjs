@@ -80,31 +80,77 @@ const towerLit = [
 const louvres = []
 for (const x of [258, 296]) for (let y = 500; y < 576; y += 7) louvres.push(R(x, y, x + 20, y + 1.6))
 
-// The clock's face is drawn here; its hands are placed at the real time when
-// the scene is drawn (HOUR_AT and MINUTE_AT stand in for their angles) and
-// turn on their own from there: CLOCK_MOTION.
-const HOUR_AT = 'rotate(-1001 289 652)'
-const MINUTE_AT = 'rotate(-1002 289 652)'
-const clock = (() => {
-  const cx = 289
-  const cy = 652
-  const ticks = []
-  for (let i = 0; i < 12; i++) {
-    const a = (Math.PI * 2 * i) / 12
-    const r0 = i % 3 === 0 ? 16.5 : 19
-    ticks.push(`M${n(cx + Math.cos(a) * r0)} ${n(cy + Math.sin(a) * r0)}L${n(cx + Math.cos(a) * 22)} ${n(cy + Math.sin(a) * 22)}`)
+// The clock: a gothic tower clock with a backlit face, a gilded bezel, a
+// minute track, Roman numerals set radially, and ornate hands. Its hands are
+// placed at the real time when the scene is drawn (HOUR_AT, MINUTE_AT and
+// SECOND_AT stand in for their angles) and turn on from there: CLOCK_MOTION.
+const CX = 280
+const CY = 654
+const CR = 31
+const HOUR_AT = `rotate(-1001 ${CX} ${CY})`
+const MINUTE_AT = `rotate(-1002 ${CX} ${CY})`
+const SECOND_AT = `rotate(-1003 ${CX} ${CY})`
+
+// Roman numerals from strokes, h tall, centred on 0 0, top up.
+function numeral(text, h) {
+  const w = { I: 0.9, V: 2.5, X: 2.5 }
+  const gap = 0.55
+  const total = [...text].reduce((a, c) => a + w[c], 0) + gap * (text.length - 1)
+  let x = -total / 2
+  const d = []
+  const t = -h / 2
+  const b = h / 2
+  for (const c of text) {
+    if (c === 'I') d.push(`M${n(x + 0.45)} ${n(t)}V${n(b)}`)
+    if (c === 'V') d.push(`M${n(x)} ${n(t)}L${n(x + w.V / 2)} ${n(b)}L${n(x + w.V)} ${n(t)}`)
+    if (c === 'X') d.push(`M${n(x)} ${n(t)}L${n(x + w.X)} ${n(b)}M${n(x + w.X)} ${n(t)}L${n(x)} ${n(b)}`)
+    x += w[c] + gap
   }
-  return `<circle cx="${cx}" cy="${cy}" r="27" fill="#030406"/><circle cx="${cx}" cy="${cy}" r="24" fill="url(#clockface)"/><path d="${ticks.join('')}" stroke="#1a1208" stroke-width="1.8" stroke-linecap="round" fill="none"/>`
-    + `<g class="hh" transform="${HOUR_AT}"><path d="M${cx} ${cy + 3}V${cy - 12}" stroke="#1a1208" stroke-width="2.4" stroke-linecap="round"/></g>`
-    + `<g class="mh" transform="${MINUTE_AT}"><path d="M${cx} ${cy + 4}V${cy - 19}" stroke="#1a1208" stroke-width="1.5" stroke-linecap="round"/></g>`
-    + `<circle cx="${cx}" cy="${cy}" r="1.9" fill="#1a1208"/>`
+  // Serifs: a short bar across the top and the foot of the whole numeral.
+  d.push(`M${n(-total / 2 - 0.4)} ${n(t)}H${n(total / 2 + 0.4)}M${n(-total / 2 - 0.4)} ${n(b)}H${n(total / 2 + 0.4)}`)
+  return d.join('')
+}
+
+const clock = (() => {
+  const marks = []
+  const bold = []
+  for (let i = 0; i < 60; i++) {
+    const a = (Math.PI * 2 * i) / 60 - Math.PI / 2
+    const [r0, r1] = i % 5 === 0 ? [CR - 7, CR - 2.2] : [CR - 4.6, CR - 2.2]
+    ;(i % 5 === 0 ? bold : marks).push(`M${n(CX + Math.cos(a) * r0)} ${n(CY + Math.sin(a) * r0)}L${n(CX + Math.cos(a) * r1)} ${n(CY + Math.sin(a) * r1)}`)
+  }
+  const names = ['XII', 'I', 'II', 'III', 'IIII', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI']
+  const numerals = names
+    .map((name, i) => `<path transform="rotate(${i * 30} ${CX} ${CY}) translate(${CX} ${n(CY - CR + 12.2)})" d="${numeral(name, 4.6)}"/>`)
+    .join('')
+  // Hands, each drawn pointing at twelve from the centre.
+  const hour = `M${CX - 1.3} ${CY + 5}L${CX - 1.1} ${CY - 7}L${CX - 2.6} ${CY - 10.5}L${CX} ${CY - 16.5}L${CX + 2.6} ${CY - 10.5}L${CX + 1.1} ${CY - 7}L${CX + 1.3} ${CY + 5}Z`
+    + `M${CX - 1} ${CY - 10.5}L${CX} ${CY - 13.6}L${CX + 1} ${CY - 10.5}L${CX} ${CY - 8.8}Z`
+  const minute = `M${CX - 0.9} ${CY + 7}L${CX - 0.55} ${CY - CR + 7}L${CX} ${CY - CR + 3.4}L${CX + 0.55} ${CY - CR + 7}L${CX + 0.9} ${CY + 7}Z`
+  const second = `M${CX - 0.28} ${CY + 9}V${CY - CR + 3}H${CX + 0.28}V${CY + 9}Z`
+  return [
+    `<circle cx="${CX}" cy="${CY}" r="${CR + 6}" fill="#05060a"/>`,
+    `<circle cx="${CX}" cy="${CY}" r="${CR + 5.2}" fill="none" stroke="#1c2029" stroke-width="1.2"/>`,
+    `<circle cx="${CX}" cy="${CY}" r="${CR + 1.3}" fill="none" stroke="url(#gilt)" stroke-width="2"/>`,
+    `<circle cx="${CX}" cy="${CY}" r="${CR}" fill="url(#clockface)"/>`,
+    `<g fill="none" stroke="#3a2610"><circle cx="${CX}" cy="${CY}" r="${CR - 2.2}" stroke-width=".45" opacity=".6"/><circle cx="${CX}" cy="${CY}" r="${CR - 7}" stroke-width=".45" opacity=".5"/><circle cx="${CX}" cy="${CY}" r="${CR - 17}" stroke-width=".35" opacity=".35"/>`,
+    `<path d="${marks.join('')}" stroke-width=".45" stroke-linecap="round"/><path d="${bold.join('')}" stroke-width="1.15" stroke-linecap="round"/></g>`,
+    `<g fill="none" stroke="#2a1a08" stroke-width=".62" stroke-linecap="square">${numerals}</g>`,
+    // A reflection on the glass, top left.
+    `<path d="M${n(CX - CR * 0.72)} ${n(CY - CR * 0.25)}A${n(CR * 0.8)} ${n(CR * 0.8)} 0 0 1 ${n(CX + CR * 0.1)} ${n(CY - CR * 0.78)}" stroke="#fffaf0" stroke-opacity=".22" stroke-width="2.4" stroke-linecap="round" fill="none"/>`,
+    `<g class="hh" transform="${HOUR_AT}"><path d="${hour}" fill="#1b1209"/></g>`,
+    `<g class="mh" transform="${MINUTE_AT}"><path d="${minute}" fill="#1b1209"/><circle cx="${CX}" cy="${CY + 7}" r="1.5" fill="#1b1209"/></g>`,
+    `<g class="sh" transform="${SECOND_AT}"><path d="${second}" fill="#8a2a1c"/><circle cx="${CX}" cy="${CY + 8.6}" r="1" fill="#8a2a1c"/></g>`,
+    `<circle cx="${CX}" cy="${CY}" r="2.4" fill="url(#gilt)"/><circle cx="${CX}" cy="${CY}" r=".9" fill="#1b1209"/>`,
+  ].join('')
 })()
-// --ch and --cm are the seconds into the twelve hours and into the hour.
-const CLOCK_MOTION = '.hh,.mh{transform-box:view-box;transform-origin:289px 652px}'
+// --ch, --cm and --cs are the seconds into the twelve hours, the hour and the minute.
+const CLOCK_MOTION = `.hh,.mh,.sh{transform-box:view-box;transform-origin:${CX}px ${CY}px}`
   + '.hh{animation:hand 43200s linear calc(var(--ch,0s) * -1) infinite}'
   + '.mh{animation:hand 3600s linear calc(var(--cm,0s) * -1) infinite}'
+  + '.sh{animation:hand 60s linear calc(var(--cs,0s) * -1) infinite}'
   + '@keyframes hand{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}'
-  + '@media (prefers-reduced-motion:reduce){.hh,.mh{animation:none!important}}'
+  + '@media (prefers-reduced-motion:reduce){.hh,.mh,.sh{animation:none!important}.sh{display:none}}'
 
 // ---------------------------------------------------------------- bats
 // A bat, wings up, centred on 0 0, about 40 wide.
@@ -162,7 +208,7 @@ const defs = `<defs>
 <linearGradient id="street" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9a3c" stop-opacity="0"/><stop offset="1" stop-color="#ff9a3c" stop-opacity=".2"/></linearGradient>
 <linearGradient id="flood" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#e8a24a" stop-opacity=".46"/><stop offset=".55" stop-color="#d08a3c" stop-opacity=".2"/><stop offset="1" stop-color="#b87830" stop-opacity="0"/></linearGradient>
 <radialGradient id="rose"><stop offset="0" stop-color="#ffd890"/><stop offset=".45" stop-color="#e09a48"/><stop offset=".75" stop-color="#b84a4a"/><stop offset="1" stop-color="#4b5fb4"/></radialGradient>
-<radialGradient id="clockface"><stop offset="0" stop-color="#ffe7b0"/><stop offset=".7" stop-color="#f0c070"/><stop offset="1" stop-color="#c98a3c"/></radialGradient>
+<radialGradient id="clockface" cx=".45" cy=".42" r=".62"><stop offset="0" stop-color="#fff3d2"/><stop offset=".55" stop-color="#f6d796"/><stop offset=".88" stop-color="#e2ad5e"/><stop offset="1" stop-color="#b9813a"/></radialGradient><linearGradient id="gilt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f2d08a"/><stop offset=".45" stop-color="#b8862e"/><stop offset=".7" stop-color="#e6c06e"/><stop offset="1" stop-color="#7a5418"/></linearGradient>
 <radialGradient id="clockglow"><stop offset="0" stop-color="#f2b45a" stop-opacity=".28"/><stop offset="1" stop-color="#f2b45a" stop-opacity="0"/></radialGradient>
 <linearGradient id="mist" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fa3c0" stop-opacity="0"/><stop offset=".5" stop-color="#8fa3c0" stop-opacity=".08"/><stop offset="1" stop-color="#8fa3c0" stop-opacity="0"/></linearGradient>
 <radialGradient id="vig" cx=".5" cy=".42" r=".78"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".55"/></radialGradient>
@@ -187,7 +233,7 @@ const PARTS = {
 ${cityBand}
 </svg>
 <svg width="100%" height="100%" viewBox="0 0 320 1000" preserveAspectRatio="xMaxYMax meet" overflow="visible">
-<circle cx="289" cy="652" r="60" fill="url(#clockglow)"/>
+<circle cx="${CX}" cy="${CY}" r="74" fill="url(#clockglow)"/>
 <path d="${tower}" fill="#030406"/>
 <path d="M238 600h1.4v520h-1.4zM224 880h1.2v240h-1.2zM244 463h1.2v137h-1.2z" fill="#33415c" opacity=".5"/>
 <path d="${towerLit}" fill="#e9a451" opacity=".55"/>
@@ -233,7 +279,7 @@ const MOTION = `
 const RAIN_DEFS = `<defs><pattern id="rainA" width="60" height="110" patternUnits="userSpaceOnUse"><path d="${rainA.join('')}" stroke="#b9c8dc" stroke-width=".3" stroke-linecap="round"/></pattern><pattern id="rainB" width="90" height="170" patternUnits="userSpaceOnUse"><path d="${rainB.join('')}" stroke="#9fb0c8" stroke-width=".22" stroke-linecap="round"/></pattern></defs>`
 
 const banner = '// Generated by tools/build-art.mjs: the art as plain SVG text. Edit the\n// builder and run it again, not this file.\n'
-const ts = banner + Object.entries({ SKY: PARTS.sky, RAIN: PARTS.rain, RAIN_DEFS, TAIL: PARTS.tail, MOTION, CLOCK_MOTION, HOUR_AT, MINUTE_AT, BAT })
+const ts = banner + Object.entries({ SKY: PARTS.sky, RAIN: PARTS.rain, RAIN_DEFS, TAIL: PARTS.tail, MOTION, CLOCK_MOTION, HOUR_AT, MINUTE_AT, SECOND_AT, CLOCK_CENTER: `${CX} ${CY}`, BAT })
   .map(([k, v]) => `export const ${k} = ${JSON.stringify(v)}\n`).join('')
 const [out, previews] = process.argv.slice(2)
 if (!out) throw new Error('Usage: node tools/build-art.mjs hooks/art.ts [preview-folder]')

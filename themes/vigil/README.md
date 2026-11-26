@@ -83,7 +83,7 @@ Run `/theme` and pick **Vigil**. Claude Code's own colors turn to Vigil's: signa
 - **Click the sky.** In the animated city, clicking an empty part of the night sky sends a flock of bats up from that point.
 - **Respects Reduce Motion.** With Reduce Motion on, the city is drawn still and the shader stays off.
 - **Readable first.** Panels frost over the city in the palette's own blue-black. On every surface color in the palette, body text is at least 13.8:1, secondary text 8.8:1 and muted text 5.4:1. Code takes its colors from the theme: gold keywords, green strings, violet literals, rose names and amber variables.
-- **A clock that keeps time.** The clock tower's hands show the real time and turn on their own, even when the city is held still.
+- **A clock that keeps time.** The clock tower is a gilded gothic clock with Roman numerals and a minute track, its hands set to the real time and sweeping on their own: the hour and minute hands even when the city is held still, a fine second hand while it moves.
 - **Fits any window.** The clock tower stays pinned to the right edge, and the skyline stays along the bottom, from a phone held upright to an ultrawide monitor.
 
 The palette is dark only: blue-black stone, silver type and signal gold.

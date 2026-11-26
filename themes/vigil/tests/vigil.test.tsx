@@ -378,9 +378,10 @@ test('the clock tower shows the time where the person is', async ($, on) => {
   engine(on, { clockZone: 'UTC' })
   const utc = await $.ui.mount({ ...BACKDROP, surface: 'mobile' })
   const atUtc = await sourceOf(utc)
-  expect(atUtc).toContain('<g class="hh" transform="rotate(15.00 289 652)">')
-  expect(atUtc).toContain('<g class="mh" transform="rotate(180.00 289 652)">')
-  expect(atUtc).toContain('--ch:1800.0s;--cm:1800.0s')
+  expect(atUtc).toContain('<g class="hh" transform="rotate(15.00 280 654)">')
+  expect(atUtc).toContain('<g class="mh" transform="rotate(180.00 280 654)">')
+  expect(atUtc).toContain('<g class="sh" transform="rotate(0.00 280 654)">')
+  expect(atUtc).toContain('--ch:1800.0s;--cm:1800.0s;--cs:0.0s')
   await utc.unmount()
 })
 
@@ -388,8 +389,10 @@ test('a fixed offset moves the hands with it', async ($, on) => {
   engine(on, { clockZone: '+05:30' })
   const ui = await $.ui.mount({ ...BACKDROP, surface: 'desktop', props: { ...BACKDROP.props, scene: 'vigil-still' } })
   const six = await sourceOf(ui)
-  expect(six).toContain('<g class="hh" transform="rotate(180.00 289 652)">')
-  expect(six).toContain('<g class="mh" transform="rotate(0.00 289 652)">')
+  expect(six).toContain('<g class="hh" transform="rotate(180.00 280 654)">')
+  expect(six).toContain('<g class="mh" transform="rotate(0.00 280 654)">')
+  // Held still, the city keeps no second hand.
+  expect(six).toContain('.sh{display:none}')
   await ui.unmount()
 })
 

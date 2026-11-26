@@ -1,5 +1,5 @@
 import type { VigilBurst } from '../types'
-import { BAT, CLOCK_MOTION, HOUR_AT, MINUTE_AT, MOTION, RAIN, RAIN_DEFS, SKY, TAIL } from './art'
+import { BAT, CLOCK_CENTER, CLOCK_MOTION, HOUR_AT, MINUTE_AT, MOTION, RAIN, RAIN_DEFS, SECOND_AT, SKY, TAIL } from './art'
 import type { WallTime } from './clock'
 
 export const ALT =
@@ -37,14 +37,13 @@ export function sceneSource({ isMoving, hasRain, phase, burst, clock }: SceneOpt
   const time = clock ?? { h: 10, m: 10, s: 0 }
   const intoHour = time.m * 60 + time.s
   const intoTwelve = (time.h % 12) * 3600 + intoHour
-  const hands = `--ch:${intoTwelve.toFixed(1)}s;--cm:${intoHour.toFixed(1)}s`
+  const hands = `--ch:${intoTwelve.toFixed(1)}s;--cm:${intoHour.toFixed(1)}s;--cs:${time.s.toFixed(1)}s`
+  // The still city keeps its hour and minute hands turning, but no second hand.
   const style = isMoving
     ? `<style>svg{--t:${(((phase % 3600) + 3600) % 3600).toFixed(2)}s;${hands}}${MOTION}${CLOCK_MOTION}${flight?.css ?? ''}</style>`
-    : `<style>svg{${hands}}${CLOCK_MOTION}</style>`
-  const sky = SKY.replace(HOUR_AT, `rotate(${((intoTwelve / 43200) * 360).toFixed(2)} 289 652)`).replace(
-    MINUTE_AT,
-    `rotate(${((intoHour / 3600) * 360).toFixed(2)} 289 652)`,
-  )
+    : `<style>svg{${hands}}${CLOCK_MOTION}.sh{display:none}</style>`
+  const at = (seconds: number, period: number) => `rotate(${((seconds / period) * 360).toFixed(2)} ${CLOCK_CENTER})`
+  const sky = SKY.replace(HOUR_AT, at(intoTwelve, 43200)).replace(MINUTE_AT, at(intoHour, 3600)).replace(SECOND_AT, at(time.s, 60))
   const body = sky + (hasRain ? RAIN : '') + TAIL + (flight?.markup ?? '')
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">${style}${body}</svg>`
