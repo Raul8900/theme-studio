@@ -26,7 +26,7 @@ const WORDS: Record<string, VigilMode> = {
 }
 
 const SAID: Record<VigilMode, string> = {
-  animated: 'Vigil: the city moves. Rain, drifting mist, and the searchlight sweeping the clouds.',
+  animated: 'Vigil: the city moves. Rain, drifting cloud and mist, windows going on and off, an aircraft crossing.',
   still: 'Vigil: the city holds still. The same night, with nothing moving.',
   plain: 'Vigil: no picture, just the night sky. The colors stay.',
 }

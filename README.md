@@ -4,7 +4,7 @@ Themes for Claude Code. Each one sets the app's colors and draws a backdrop behi
 
 | Theme | | Install |
 | --- | --- | --- |
-| [**Vigil**](themes/vigil) | Night over a gothic city: storm clouds, a searchlight in gold, rain and bats. Dark, animated or still, with its colors for the terminal too. | `/plugin install vigil --marketplace Raul8900/theme-studio` |
+| [**Vigil**](themes/vigil) | Night over a gothic and art deco city: low cloud, rain, floodlit towers and a clock tower. Dark, animated or still, with its colors for the terminal too. | `/plugin install vigil --marketplace Raul8900/theme-studio` |
 
 ![Vigil](previews/vigil/vigil-scene.jpg)
 

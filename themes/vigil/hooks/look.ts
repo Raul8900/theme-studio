@@ -3,8 +3,8 @@ import type { ThemeBackdropGlass, ThemeSetArgs } from 'claude-code'
 import type { VigilMode } from '../types'
 import { makeColors } from './make-colors.js'
 
-// Night over a gothic city: blue-black stone, silver type, and the gold of a
-// searchlight on low cloud. Dark only, since the idea is the night.
+// Night over a gothic city: blue-black stone, silver type, and the gold of
+// lit windows and floodlit crowns. Dark only, since the idea is the night.
 export const { theme: COLORS, problems: PROBLEMS } = makeColors({
   label: 'Vigil',
   id: 'vigil',

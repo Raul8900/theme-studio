@@ -174,9 +174,9 @@ test('the city draws on desktop and mobile, moving or still', async ($, on) => {
     const moving = await $.ui.mount({ ...BACKDROP, surface })
     const live = await sourceOf(moving)
     expect(live.startsWith('<svg')).toBe(true)
-    expect(live).toContain('@keyframes sweep')
+    expect(live).toContain('@keyframes drift')
     expect(live).toContain('--t:1800.00s')
-    expect((await moving.find({ type: 'Svg' }))?.props.alt).toContain('searchlight')
+    expect((await moving.find({ type: 'Svg' }))?.props.alt).toContain('city at night')
     await moving.unmount()
 
     const held = await $.ui.mount({ ...BACKDROP, surface, props: { ...BACKDROP.props, scene: 'vigil-still' } })
@@ -196,14 +196,12 @@ test('on desktop the moving city rains through the shader; elsewhere it rains in
   expect(shader?.props.module).toBe('hooks/rain.ts')
   const dry = await sourceOf(desk)
   expect(dry).not.toContain('class="ra"')
-  expect(dry).not.toContain('clip-path="url(#beamClip)"')
   await desk.unmount()
 
   const phone = await $.ui.mount({ ...BACKDROP, surface: 'mobile' })
   expect(await phone.find({ type: 'Shader' })).toBeUndefined()
   const wet = await sourceOf(phone)
   expect(wet).toContain('class="ra"')
-  expect(wet).toContain('clip-path="url(#beamClip)"')
   await phone.unmount()
 
   // The still city has no shader on any surface, and keeps its rain, held.

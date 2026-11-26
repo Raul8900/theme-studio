@@ -1,14 +1,14 @@
 import type { VigilBurst } from '../types'
-import { BAT, BEAM_RAIN, HEAD, MIDDLE, MOTION, RAIN, TAIL } from './art'
+import { BAT, MOTION, RAIN, SKY, TAIL } from './art'
 
 export const ALT =
-  'A gothic city at night in the rain: a searchlight lights the low clouds, and bats cross the light over a gothic skyline.'
+  'A gothic city at night in the rain: art deco towers with floodlit crowns, a cathedral, a domed hall and a clock tower under low cloud, windows lit here and there.'
 
 /** How long a flock that took off from a click stays in the drawing, in ms. */
 export const BURST_MS = 6000
 
 export type SceneOptions = {
-  /** Includes the motion: rain, the searchlight's sweep, mist, bats. */
+  /** Includes the motion: rain, mist, clouds, an aircraft, bats, beacons. */
   isMoving: boolean
   /** Draws the SVG's own rain; false where a shader rains over it instead. */
   hasRain: boolean
@@ -27,8 +27,7 @@ export function sceneSource({ isMoving, hasRain, phase, burst }: SceneOptions): 
   const style = isMoving
     ? `<style>svg{--t:${(((phase % 3600) + 3600) % 3600).toFixed(2)}s}${MOTION}${flight?.css ?? ''}</style>`
     : ''
-  const body =
-    HEAD + (hasRain ? BEAM_RAIN : '') + MIDDLE + (hasRain ? RAIN : '') + TAIL + (flight?.markup ?? '')
+  const body = SKY + (hasRain ? RAIN : '') + TAIL + (flight?.markup ?? '')
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">${style}${body}</svg>`
 }

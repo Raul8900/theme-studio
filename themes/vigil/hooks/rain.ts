@@ -1,7 +1,7 @@
 // Rain over the city, on the GPU: a few hundred streaks, faint in the dark and
-// bright where the city's own light falls on them (the searchlight, its disk
-// on the clouds, lit windows, beacons), and where the pointer rests on the
-// bare sky, as if under a lamp.
+// bright where the city's own light falls on them (lit windows, floodlit
+// crowns, the clock face, beacons), and where the pointer rests on the bare
+// sky, as if under a lamp.
 import {
   buffer,
   clamp,
