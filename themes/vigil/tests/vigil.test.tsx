@@ -380,8 +380,8 @@ test('the clock tower shows the time where the person is', async ($, on) => {
   const atUtc = await sourceOf(utc)
   expect(atUtc).toContain('<g class="hh" transform="rotate(15.00 269 655)">')
   expect(atUtc).toContain('<g class="mh" transform="rotate(180.00 269 655)">')
-  expect(atUtc).toContain('<g class="sh" transform="rotate(0.00 269 655)">')
-  expect(atUtc).toContain('--ch:1800.0s;--cm:1800.0s;--cs:0.0s')
+  expect(atUtc).not.toContain('class="sh"')
+  expect(atUtc).toContain('--ch:1800.0s;--cm:1800.0s')
   await utc.unmount()
 })
 
@@ -391,8 +391,6 @@ test('a fixed offset moves the hands with it', async ($, on) => {
   const six = await sourceOf(ui)
   expect(six).toContain('<g class="hh" transform="rotate(180.00 269 655)">')
   expect(six).toContain('<g class="mh" transform="rotate(0.00 269 655)">')
-  // Held still, the city keeps no second hand.
-  expect(six).toContain('.sh{display:none}')
   await ui.unmount()
 })
 

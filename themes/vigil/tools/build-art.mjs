@@ -52,107 +52,120 @@ function spire(x0, x1, base, tip, bump) {
   return `M${pts.map(([a, b]) => `${n(a)} ${n(b)}`).join('L')}Z`
 }
 
+// The tower is drawn on its own centre line, x 289, and moved in from the
+// window's edge by TOWER_SHIFT so it shows whole. The clock is drawn at the
+// moved position, outside that move, so its hands turn about their true centre.
+const TOWER_SHIFT = -20
+const TC = 289
+
 const merlons = []
-for (let x = 244; x < 336; x += 9) merlons.push(R(x, 455, x + 5, 463))
+for (let x = 244; x < 334; x += 9) merlons.push(R(x, 455, x + 5, 463))
 
 const tower = [
   R(238, 600, 340, 1120), // the shaft
   'M224 1120V880L238 862V1120Z', // a stepped buttress
   'M229 862V770L238 758V862Z',
-  R(233, 600, 340, 606), R(233, 702, 340, 708), R(231, 862, 340, 868), // string courses
-  R(244, 463, 340, 601), // the belfry
-  R(240, 455, 340, 464), merlons.join(''), // parapet and battlements
-  R(240, 418, 252, 456), `M239 419L246 372L253 419Z`, // corner pinnacle
-  R(326, 418, 338, 456), `M325 419L332 372L339 419Z`,
-  spire(256, 330, 456, 236, 2.2), // the spire
-  R(286, 360, 300, 378), `M284.5 361L293 349L301.5 361Z`, // a lucarne on the spire
-  `M292.3 238L293 214L293.7 238Z`, // the finial
+  R(233, 600, 345, 606), R(233, 702, 345, 708), R(231, 862, 345, 868), // string courses
+  R(244, 463, 334, 601), // the belfry
+  R(240, 455, 338, 464), merlons.join(''), // parapet and battlements
+  R(240, 418, 252, 456), 'M239 419L246 374L253 419Z', // corner pinnacles
+  R(326, 418, 338, 456), 'M325 419L332 374L339 419Z',
+  spire(252, 326, 456, 238, 2.2), // the spire
+  R(282, 362, 296, 380), 'M280.5 363L289 350L297.5 363Z', // a lucarne on the spire
+  'M288.4 240L289 216L289.6 240Z', // the finial's spike
 ].join('')
 
-const towerLit = [
-  lancet(258, 478, 20, 100), lancet(296, 478, 20, 100), // belfry openings
-  R(289.5, 364, 296.5, 376), // the lucarne's slit
-  lancet(262, 760, 12, 52), lancet(302, 760, 12, 52),
-  lancet(281, 920, 12, 44),
-].join('')
+// Coursing: faint joints in the stone, and quoins up both corners.
+const masonry = []
+for (let y = 612; y < 1116; y += 11) {
+  if (y > 606 && y < 704) {
+    masonry.push(R(238, y, 245, y + 0.5), R(333, y, 340, y + 0.5))
+  } else masonry.push(R(238, y, 340, y + 0.5))
+}
+for (let y = 470; y < 598; y += 11) masonry.push(R(244, y, 258, y + 0.5), R(320, y, 334, y + 0.5))
+const quoins = []
+for (let y = 610; y < 1116; y += 22) quoins.push(R(238, y, 246 + ((y / 22) % 2) * 3, y + 10.5), R(332 - ((y / 22) % 2) * 3, y, 340, y + 10.5))
 
-// Louvres across the belfry openings, so they read as a bell chamber.
-const louvres = []
-for (const x of [258, 296]) for (let y = 500; y < 576; y += 7) louvres.push(R(x, y, x + 20, y + 1.6))
+// Gilt: the top edge of each string course and of the parapet, and the finials.
+const gilt = [
+  R(233, 600, 345, 600.9), R(233, 702, 345, 702.9), R(231, 862, 345, 862.9), R(240, 455, 338, 455.8),
+  'M245.2 376L246 360L246.8 376Z', 'M331.2 376L332 360L332.8 376Z', 'M288.5 222L289 204L289.5 222Z',
+].join('')
+const giltDots = [[246, 374, 1.6], [332, 374, 1.6], [289, 224, 2.3]]
+  .map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join('')
+
+// The clock's panel: a slightly paler stone square with a gilt rule and a
+// gilt quatrefoil in each corner.
+const panel = R(245, 611, 333, 699)
+const panelRule = R(248, 614, 330, 696)
+const quatrefoil = (x, y, r) => [[0, -r], [r, 0], [0, r], [-r, 0]]
+  .map(([dx, dy]) => `<circle cx="${n(x + dx * 0.55)}" cy="${n(y + dy * 0.55)}" r="${n(r * 0.55)}"/>`).join('')
+const quatrefoils = [[253.5, 619.5], [324.5, 619.5], [253.5, 690.5], [324.5, 690.5]].map(([x, y]) => quatrefoil(x, y, 4)).join('')
+
+// Windows: warm glass, then tracery in the stone's colour over it.
+const belfry = [[260, 478, 18, 100], [300, 478, 18, 100]]
+const lower = [[266, 760, 14, 54], [298, 760, 14, 54], [282, 920, 14, 46]]
+const towerLit = [...belfry, ...lower].map(([x, y, w, h]) => lancet(x, y, w, h)).join('') + R(286, 366, 292, 378)
+const tracery = []
+for (const [x, y, w, h] of belfry) {
+  tracery.push(R(x + w / 2 - 0.7, y + w * 0.5, x + w / 2 + 0.7, y + h)) // mullion
+  for (let ly = y + 26; ly < y + h - 3; ly += 8) tracery.push(R(x, ly, x + w, ly + 1.3)) // louvres
+}
+for (const [x, y, w, h] of lower) tracery.push(R(x + w / 2 - 0.6, y + w * 0.4, x + w / 2 + 0.6, y + h), R(x, y + h * 0.55, x + w, y + h * 0.55 + 1.1))
+const traceryRings = belfry.map(([x, y, w]) => `<circle cx="${x + w / 2}" cy="${n(y + w * 0.62)}" r="${n(w * 0.22)}"/>`).join('')
+const archEdges = [...belfry, ...lower].map(([x, y, w, h]) => lancet(x, y, w, h)).join('')
 
 // The clock: a gothic tower clock with a backlit face, a gilded bezel, a
-// minute track, Roman numerals set radially, and ornate hands. Its hands are
-// placed at the real time when the scene is drawn (HOUR_AT, MINUTE_AT and
-// SECOND_AT stand in for their angles) and turn on from there: CLOCK_MOTION.
-// The tower is drawn at its own coordinates and moved in from the edge by
-// TOWER_SHIFT, so it shows whole; the clock is centred on its shaft.
-const TOWER_SHIFT = -20
-const CX = 289 + TOWER_SHIFT
+// minute track, Roman numerals set in a serif face, and ornate hands. Its
+// hands are placed at the real time when the scene is drawn (HOUR_AT and
+// MINUTE_AT stand in for their angles) and turn on from there: CLOCK_MOTION.
+const CX = TC + TOWER_SHIFT
 const CY = 655
 const CR = 36
 const HOUR_AT = `rotate(-1001 ${CX} ${CY})`
 const MINUTE_AT = `rotate(-1002 ${CX} ${CY})`
-const SECOND_AT = `rotate(-1003 ${CX} ${CY})`
-
-// Roman numerals from strokes, h tall, centred on 0 0, top up.
-function numeral(text, h) {
-  const w = { I: 0.9, V: 2.5, X: 2.5 }
-  const gap = 0.55
-  const total = [...text].reduce((a, c) => a + w[c], 0) + gap * (text.length - 1)
-  let x = -total / 2
-  const d = []
-  const t = -h / 2
-  const b = h / 2
-  for (const c of text) {
-    if (c === 'I') d.push(`M${n(x + 0.45)} ${n(t)}V${n(b)}`)
-    if (c === 'V') d.push(`M${n(x)} ${n(t)}L${n(x + w.V / 2)} ${n(b)}L${n(x + w.V)} ${n(t)}`)
-    if (c === 'X') d.push(`M${n(x)} ${n(t)}L${n(x + w.X)} ${n(b)}M${n(x + w.X)} ${n(t)}L${n(x)} ${n(b)}`)
-    x += w[c] + gap
-  }
-  // Serifs: a short bar across the top and the foot of the whole numeral.
-  d.push(`M${n(-total / 2 - 0.4)} ${n(t)}H${n(total / 2 + 0.4)}M${n(-total / 2 - 0.4)} ${n(b)}H${n(total / 2 + 0.4)}`)
-  return d.join('')
-}
 
 const clock = (() => {
   const marks = []
   const bold = []
   for (let i = 0; i < 60; i++) {
     const a = (Math.PI * 2 * i) / 60 - Math.PI / 2
-    const [r0, r1] = i % 5 === 0 ? [CR - 8.4, CR - 2.4] : [CR - 5.2, CR - 2.4]
+    const [r0, r1] = i % 5 === 0 ? [CR - 6.2, CR - 2.4] : [CR - 4.6, CR - 2.4]
     ;(i % 5 === 0 ? bold : marks).push(`M${n(CX + Math.cos(a) * r0)} ${n(CY + Math.sin(a) * r0)}L${n(CX + Math.cos(a) * r1)} ${n(CY + Math.sin(a) * r1)}`)
   }
+  // Upright, in a serif face, on a ring just inside the minute track.
   const names = ['XII', 'I', 'II', 'III', 'IIII', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI']
+  const ring = CR - 12.2
   const numerals = names
-    .map((name, i) => `<path transform="rotate(${i * 30} ${CX} ${CY}) translate(${CX} ${n(CY - CR + 14)})" d="${numeral(name, 6.4)}"/>`)
+    .map((name, i) => {
+      const a = (Math.PI * 2 * i) / 12 - Math.PI / 2
+      return `<text x="${n(CX + Math.cos(a) * ring)}" y="${n(CY + Math.sin(a) * ring)}">${name}</text>`
+    })
     .join('')
   // Hands, each drawn pointing at twelve from the centre.
-  const hour = `M${CX - 1.8} ${CY + 6}L${CX - 1.5} ${CY - 9}L${CX - 3.6} ${CY - 13.5}L${CX} ${CY - 21}L${CX + 3.6} ${CY - 13.5}L${CX + 1.5} ${CY - 9}L${CX + 1.8} ${CY + 6}Z`
+  const hour = `M${CX - 1.8} ${CY + 6}L${CX - 1.5} ${CY - 9}L${CX - 3.6} ${CY - 13.5}L${CX} ${CY - 20}L${CX + 3.6} ${CY - 13.5}L${CX + 1.5} ${CY - 9}L${CX + 1.8} ${CY + 6}Z`
   const minute = `M${CX - 1.25} ${CY + 8}L${CX - 0.8} ${CY - CR + 8.5}L${CX} ${CY - CR + 3.6}L${CX + 0.8} ${CY - CR + 8.5}L${CX + 1.25} ${CY + 8}Z`
-  const second = `M${CX - 0.4} ${CY + 10}V${CY - CR + 3.2}H${CX + 0.4}V${CY + 10}Z`
   return [
-    `<circle cx="${CX}" cy="${CY}" r="${CR + 6}" fill="#05060a"/>`,
+    `<circle cx="${CX}" cy="${CY}" r="${CR + 6}" fill="#06070b"/>`,
     `<circle cx="${CX}" cy="${CY}" r="${CR + 5.2}" fill="none" stroke="#1c2029" stroke-width="1.2"/>`,
-    `<circle cx="${CX}" cy="${CY}" r="${CR + 1.3}" fill="none" stroke="url(#gilt)" stroke-width="2"/>`,
+    `<circle cx="${CX}" cy="${CY}" r="${CR + 1.3}" fill="none" stroke="url(#gilt)" stroke-width="2.2"/>`,
     `<circle cx="${CX}" cy="${CY}" r="${CR}" fill="url(#clockface)"/>`,
     `<g fill="none" stroke="#3a2610"><circle cx="${CX}" cy="${CY}" r="${CR - 2.4}" stroke-width=".8" opacity=".7"/>`,
     `<path d="${marks.join('')}" stroke-width=".75" stroke-linecap="round"/><path d="${bold.join('')}" stroke-width="1.7" stroke-linecap="round"/></g>`,
-    `<g fill="none" stroke="#2a1a08" stroke-width=".95" stroke-linecap="square">${numerals}</g>`,
+    `<g fill="#26180a" font-family="Georgia,'Times New Roman',Times,serif" font-size="6.3" font-weight="600" text-anchor="middle" dominant-baseline="central" letter-spacing="-.15">${numerals}</g>`,
     // A reflection on the glass, top left.
-    `<path d="M${n(CX - CR * 0.72)} ${n(CY - CR * 0.25)}A${n(CR * 0.8)} ${n(CR * 0.8)} 0 0 1 ${n(CX + CR * 0.1)} ${n(CY - CR * 0.78)}" stroke="#fffaf0" stroke-opacity=".22" stroke-width="2.4" stroke-linecap="round" fill="none"/>`,
+    `<path d="M${n(CX - CR * 0.72)} ${n(CY - CR * 0.25)}A${n(CR * 0.8)} ${n(CR * 0.8)} 0 0 1 ${n(CX + CR * 0.1)} ${n(CY - CR * 0.78)}" stroke="#fffaf0" stroke-opacity=".2" stroke-width="2.4" stroke-linecap="round" fill="none"/>`,
     `<g class="hh" transform="${HOUR_AT}"><path d="${hour}" fill="#1b1209"/></g>`,
     `<g class="mh" transform="${MINUTE_AT}"><path d="${minute}" fill="#1b1209"/><circle cx="${CX}" cy="${CY + 8}" r="2" fill="#1b1209"/></g>`,
-    `<g class="sh" transform="${SECOND_AT}"><path d="${second}" fill="#8a2a1c"/><circle cx="${CX}" cy="${CY + 9.6}" r="1.3" fill="#8a2a1c"/></g>`,
     `<circle cx="${CX}" cy="${CY}" r="3" fill="url(#gilt)"/><circle cx="${CX}" cy="${CY}" r="1.1" fill="#1b1209"/>`,
   ].join('')
 })()
-// --ch, --cm and --cs are the seconds into the twelve hours, the hour and the minute.
-const CLOCK_MOTION = `.hh,.mh,.sh{transform-box:view-box;transform-origin:${CX}px ${CY}px}`
+// --ch and --cm are the seconds into the twelve hours and into the hour.
+const CLOCK_MOTION = `.hh,.mh{transform-box:view-box;transform-origin:${CX}px ${CY}px}`
   + '.hh{animation:hand 43200s linear calc(var(--ch,0s) * -1) infinite}'
   + '.mh{animation:hand 3600s linear calc(var(--cm,0s) * -1) infinite}'
-  + '.sh{animation:hand 60s linear calc(var(--cs,0s) * -1) infinite}'
   + '@keyframes hand{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}'
-  + '@media (prefers-reduced-motion:reduce){.hh,.mh,.sh{animation:none!important}.sh{display:none}}'
+  + '@media (prefers-reduced-motion:reduce){.hh,.mh{animation:none!important}}'
 
 // ---------------------------------------------------------------- bats
 // A bat, wings up, centred on 0 0, about 40 wide.
@@ -211,7 +224,7 @@ const defs = `<defs>
 <linearGradient id="flood" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#e8a24a" stop-opacity=".46"/><stop offset=".55" stop-color="#d08a3c" stop-opacity=".2"/><stop offset="1" stop-color="#b87830" stop-opacity="0"/></linearGradient>
 <radialGradient id="rose"><stop offset="0" stop-color="#ffd890"/><stop offset=".45" stop-color="#e09a48"/><stop offset=".75" stop-color="#b84a4a"/><stop offset="1" stop-color="#4b5fb4"/></radialGradient>
 <radialGradient id="clockface" cx=".45" cy=".42" r=".62"><stop offset="0" stop-color="#fff3d2"/><stop offset=".55" stop-color="#f6d796"/><stop offset=".88" stop-color="#e2ad5e"/><stop offset="1" stop-color="#b9813a"/></radialGradient><linearGradient id="gilt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f2d08a"/><stop offset=".45" stop-color="#b8862e"/><stop offset=".7" stop-color="#e6c06e"/><stop offset="1" stop-color="#7a5418"/></linearGradient>
-<radialGradient id="clockglow"><stop offset="0" stop-color="#f2b45a" stop-opacity=".28"/><stop offset="1" stop-color="#f2b45a" stop-opacity="0"/></radialGradient>
+<radialGradient id="wash" gradientUnits="userSpaceOnUse" cx="289" cy="655" r="120"><stop offset="0" stop-color="#e9a451" stop-opacity=".14"/><stop offset=".55" stop-color="#e9a451" stop-opacity=".05"/><stop offset="1" stop-color="#e9a451" stop-opacity="0"/></radialGradient>
 <linearGradient id="mist" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fa3c0" stop-opacity="0"/><stop offset=".5" stop-color="#8fa3c0" stop-opacity=".08"/><stop offset="1" stop-color="#8fa3c0" stop-opacity="0"/></linearGradient>
 <radialGradient id="vig" cx=".5" cy=".42" r=".78"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".55"/></radialGradient>
 <radialGradient id="bk"><stop offset="0" stop-color="#ff5a4a"/><stop offset=".35" stop-color="#ff3b30" stop-opacity=".55"/><stop offset="1" stop-color="#ff3b30" stop-opacity="0"/></radialGradient>
@@ -236,10 +249,20 @@ ${cityBand}
 </svg>
 <svg width="100%" height="100%" viewBox="0 0 320 1000" preserveAspectRatio="xMaxYMax meet" overflow="visible">
 <g transform="translate(${TOWER_SHIFT} 0)">
-<path d="${tower}" fill="#030406"/>
-<path d="M238 600h1.4v520h-1.4zM224 880h1.2v240h-1.2zM244 463h1.2v137h-1.2zM338.6 463h1.4v657h-1.4z" fill="#33415c" opacity=".5"/>
+<path d="${tower}" fill="#07090e"/>
+<path d="${R(238, 600, 340, 1120)}${R(244, 463, 334, 601)}" fill="url(#wash)"/>
+<path d="${masonry.join('')}" fill="#10141c"/>
+<path d="${quoins.join('')}" fill="#0f131a"/>
+<path d="M238 600h1.4v520h-1.4zM224 880h1.2v240h-1.2zM244 463h1.2v137h-1.2zM338.6 600h1.4v520h-1.4z" fill="#33415c" opacity=".55"/>
+<path d="${panel}" fill="#0b0e15"/>
+<path d="${panelRule}" fill="none" stroke="url(#gilt)" stroke-width=".7" opacity=".55"/>
+<g fill="url(#gilt)" opacity=".6">${quatrefoils}</g>
+<path d="${gilt}" fill="url(#gilt)" opacity=".7"/>
+<g fill="url(#gilt)">${giltDots}</g>
 <path d="${towerLit}" fill="#e9a451" opacity=".55"/>
-<path d="${louvres.join('')}" fill="#030406"/>
+<path d="${tracery.join('')}" fill="#07090e"/>
+<g fill="none" stroke="#07090e" stroke-width="1.1">${traceryRings}</g>
+<path d="${archEdges}" fill="none" stroke="url(#gilt)" stroke-width=".7" opacity=".5"/>
 </g>
 ${clock}
 </svg>`,
@@ -282,7 +305,7 @@ const MOTION = `
 const RAIN_DEFS = `<defs><pattern id="rainA" width="60" height="110" patternUnits="userSpaceOnUse"><path d="${rainA.join('')}" stroke="#b9c8dc" stroke-width=".3" stroke-linecap="round"/></pattern><pattern id="rainB" width="90" height="170" patternUnits="userSpaceOnUse"><path d="${rainB.join('')}" stroke="#9fb0c8" stroke-width=".22" stroke-linecap="round"/></pattern></defs>`
 
 const banner = '// Generated by tools/build-art.mjs: the art as plain SVG text. Edit the\n// builder and run it again, not this file.\n'
-const ts = banner + Object.entries({ SKY: PARTS.sky, RAIN: PARTS.rain, RAIN_DEFS, TAIL: PARTS.tail, MOTION, CLOCK_MOTION, HOUR_AT, MINUTE_AT, SECOND_AT, CLOCK_CENTER: `${CX} ${CY}`, BAT })
+const ts = banner + Object.entries({ SKY: PARTS.sky, RAIN: PARTS.rain, RAIN_DEFS, TAIL: PARTS.tail, MOTION, CLOCK_MOTION, HOUR_AT, MINUTE_AT, CLOCK_CENTER: `${CX} ${CY}`, BAT })
   .map(([k, v]) => `export const ${k} = ${JSON.stringify(v)}\n`).join('')
 const [out, previews] = process.argv.slice(2)
 if (!out) throw new Error('Usage: node tools/build-art.mjs hooks/art.ts [preview-folder]')
