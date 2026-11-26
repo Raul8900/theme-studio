@@ -187,10 +187,12 @@ function beam(wS, wD) {
   return `M${pt(S, wS, -1)}L${pt(S, wS, 1)}L${pt(D, wD, 1)}L${pt(D, wD, -1)}Z`
 }
 
-const beamLayers = Array.from({ length: 8 }, (_, i) => {
-  const f = (i + 1) / 8
-  return `<path d="${beam(3 + 15 * f, 34 + 214 * f)}" opacity=".1"/>`
-}).join('')
+// Three soft layers, blurred, so the beam reads as light in rain, not as bands.
+const beamLayers = [
+  `<path d="${beam(34, 310)}" opacity=".32" filter="url(#soft)"/>`,
+  `<path d="${beam(14, 190)}" opacity=".42" filter="url(#soft)"/>`,
+  `<path d="${beam(4, 84)}" opacity=".5" filter="url(#softer)"/>`,
+].join('')
 
 // A bat, wings up, centred on 0 0, about 40 wide.
 const BAT =
@@ -212,18 +214,34 @@ const flockMarkup = flock
     `<g transform="translate(${x} ${y}) scale(${s})"><g class="flap f${i}"><path d="${'#BAT'}" vector-effect="non-scaling-stroke"/></g></g>`)
   .join('')
 
-// The tower at the right edge, its gargoyle, and the watcher on it.
+// The watcher crouched on a ledge beside a gargoyle, in a local 200 x 170 box:
+// ledge top at y 150, tower wall at x 180. Facing left, down over the city.
+const FIGURE = {
+  // Hood bent forward, then a cloak that falls from the shoulders to the ledge.
+  body: [
+    'M79 50C79 43 84 38.5 90 38.5C96 38.5 100.5 43 100.5 49C100.5 52.5 99.5 55.5 101.5 57.5C109 60 115 66 119 74C125 86 131 104 135 122L139 150H57C55 140 55.5 128 58.5 118C61 108 66 98 70.5 90C70.5 82 71.5 74 74 68C75.5 64 77.5 61 80 59C78.5 56.5 78.5 53 79 50Z',
+    // A gloved hand resting on the ledge's edge in front.
+    'M66 132C60 134.5 55 139 52 145L51.5 150H60L61.5 146C63 142 65.5 139 69 137Z',
+  ],
+  // The back of the cloak, lifting in the wind and breaking into points.
+  cape: 'M108 72C122 80 136 92 148 106C156 115 164 122 174 126L165 128.5L170 136L159 133L161 142.5L151 137L150 147L141 139L139 150H131L128 120C123 104 116 88 108 72Z',
+  fold: '',
+  // A grotesque crouched on the ledge beside him, horns up, jaw open.
+  gargoyle: 'M50 150L49 136C48.5 128 45.5 121.5 40.5 117L43 104L37 111.5L34.5 101L31.5 112.5C26.5 112.5 21.5 115 18 119.5L7 120.5L14 125L6 128L16 130C17.5 135 20.5 139.5 25 142L22 150ZM40.5 118L53 102.5L51 113L60 106.5L53.5 125Z',
+  cornice: 'M0 150H200V157H0ZM8 157H200V163H8Z',
+}
+
+// The tower at the right edge; the watcher and the gargoyle sit on its ledge.
 const tower = [
   'M236 1120V548L238 540V530L240 500L242 530V540L246 548H252L288 418L324 548H340V1120Z', // body, roof, left pinnacle
   'M285 420L288 386L291 420Z', // finial
-  'M226 614V606H240V614Z', // cornice the gargoyle sits on
   'M230 742V734H240V742Z', // lower cornice
-  'M236 614L214 614C206 614 201 612 197 609L186 611L191 605L183 601C189 596 195 594 201 595L203 588L207 594C213 593 219 591 223 587L228 577L231 590L236 590Z', // gargoyle
 ]
+// Local (180, 150), where the ledge meets the wall, lands on the tower at (240, 614).
+const FIG_S = 0.9
+const FIG_T = [240 - 180 * FIG_S, 614 - 150 * FIG_S]
+const figureAt = (fill, dx, dy, cls = '') => `<g transform="translate(${n(FIG_T[0] + dx)} ${n(FIG_T[1] + dy)}) scale(${FIG_S})" fill="${fill}"><path d="${FIGURE.body.join('')}"/><g class="cape${cls}"><path d="${FIGURE.cape}"/></g></g>`
 const towerWindows = 'M262 640V612Q266 602 270 612V640ZM300 690V660Q304 650 308 660V690ZM268 820V792Q272 782 276 792V820Z'
-// The watcher: crouched, cape over the shoulders, looking down at the city.
-const watcher = 'M213.2 556.5C216.4 556.5 218.4 558.9 218.2 562C221.4 563 224.6 564.4 226.4 566.4C229.6 570 231.4 576 232.6 582.6C233.6 588 233.8 593.4 233.4 598.4L230.4 595.8L228.6 600.6L225.4 596.8L222.6 601.6L220 597.4L216.4 600.4L215 596L211.6 598.2L211 592.4L206.4 592.6C205 590.6 205.2 588 206.6 586.2C205.4 584.6 205.2 582.4 206 580.4C206.6 576 207.4 571.6 208.8 568.4C208.2 566.8 208 564.8 208.4 562.8C208.2 559.4 210.2 556.5 213.2 556.5Z'
-const capeTail = 'M226.6 570C230 575 232.4 582 233.8 589.4C234.8 594.6 235.6 600 237.2 604.8L233 602.6L231.4 606.8L228.8 602.6L226.4 606L224.8 600.6L227.4 590C228.4 583 227.8 576 226.6 570Z'
 
 // ---------------------------------------------------------------- clouds
 function cloudBank(cx, cy, spread, count, rx, ry) {
@@ -270,7 +288,8 @@ const defs = `<defs>
 <radialGradient id="clf"><stop offset="0" stop-color="#0a0e16" stop-opacity=".9"/><stop offset=".6" stop-color="#0a0e16" stop-opacity=".45"/><stop offset="1" stop-color="#0a0e16" stop-opacity="0"/></radialGradient>
 <radialGradient id="halo"><stop offset="0" stop-color="#f2b632" stop-opacity=".34"/><stop offset=".4" stop-color="#d9962a" stop-opacity=".12"/><stop offset="1" stop-color="#b8781f" stop-opacity="0"/></radialGradient>
 <radialGradient id="glow"><stop offset="0" stop-color="#ffe7a6" stop-opacity=".6"/><stop offset=".5" stop-color="#f6c457" stop-opacity=".22"/><stop offset="1" stop-color="#f2b632" stop-opacity="0"/></radialGradient>
-<radialGradient id="disk"><stop offset="0" stop-color="#fff4d6"/><stop offset=".4" stop-color="#ffe6a6"/><stop offset=".72" stop-color="#ffcf63" stop-opacity=".92"/><stop offset=".9" stop-color="#f2b632" stop-opacity=".45"/><stop offset="1" stop-color="#f2b632" stop-opacity="0"/></radialGradient>
+<filter id="soft" x="-30%" y="-10%" width="160%" height="120%"><feGaussianBlur stdDeviation="5"/></filter><filter id="softer" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="1.6"/></filter>
+<radialGradient id="disk"><stop offset="0" stop-color="#fffbef"/><stop offset=".5" stop-color="#fff0c6"/><stop offset=".78" stop-color="#ffd877"/><stop offset=".9" stop-color="#f6bd45" stop-opacity=".8"/><stop offset=".97" stop-color="#e9a22a" stop-opacity=".25"/><stop offset="1" stop-color="#e9a22a" stop-opacity="0"/></radialGradient>
 <linearGradient id="beam" gradientUnits="userSpaceOnUse" x1="${S[0]}" y1="${S[1]}" x2="${D[0]}" y2="${D[1]}"><stop offset="0" stop-color="#ffe2a0" stop-opacity=".5"/><stop offset=".45" stop-color="#ffe6ae" stop-opacity=".26"/><stop offset="1" stop-color="#fff0cc" stop-opacity=".12"/></linearGradient>
 <linearGradient id="hz" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2618" stop-opacity="0"/><stop offset=".55" stop-color="#4a3020" stop-opacity=".28"/><stop offset="1" stop-color="#5a3a22" stop-opacity=".45"/></linearGradient>
 <linearGradient id="mist" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fa3c0" stop-opacity="0"/><stop offset=".5" stop-color="#8fa3c0" stop-opacity=".09"/><stop offset="1" stop-color="#8fa3c0" stop-opacity="0"/></linearGradient>
@@ -301,9 +320,9 @@ const PARTS = {
 <ellipse cx="${D[0]}" cy="${D[1]}" rx="270" ry="160" fill="url(#halo)"/>
 <g fill="url(#beam)">${beamLayers}</g>`,
   beamRain: `<g clip-path="url(#beamClip)"><g class="rg"><rect x="-200" y="-200" width="700" height="1400" fill="url(#rainG)"/></g></g>`,
-  middle: `<g class="breathe" transform="rotate(-9 ${D[0]} ${D[1]})"><ellipse cx="${D[0]}" cy="${D[1]}" rx="150" ry="74" fill="url(#glow)"/><ellipse cx="${D[0]}" cy="${D[1]}" rx="86" ry="34" fill="url(#disk)"/><g fill="url(#clf)" opacity=".34"><ellipse cx="${D[0] - 30}" cy="${D[1] + 6}" rx="34" ry="9"/><ellipse cx="${D[0] + 26}" cy="${D[1] - 8}" rx="40" ry="7"/><ellipse cx="${D[0] + 4}" cy="${D[1] + 16}" rx="46" ry="8"/></g></g>
+  middle: `<g class="breathe" transform="rotate(-9 ${D[0]} ${D[1]})"><ellipse cx="${D[0]}" cy="${D[1]}" rx="175" ry="88" fill="url(#glow)"/><ellipse cx="${D[0]}" cy="${D[1]}" rx="94" ry="39" fill="url(#disk)" filter="url(#softer)"/><g filter="url(#softer)"><ellipse cx="${D[0] - 18}" cy="${D[1] - 9}" rx="52" ry="4" fill="#fffaf0" opacity=".45"/><ellipse cx="${D[0] + 20}" cy="${D[1] + 8}" rx="58" ry="5" fill="#e9a43a" opacity=".28"/><ellipse cx="${D[0] - 34}" cy="${D[1] + 14}" rx="34" ry="3" fill="#e9a43a" opacity=".22"/></g></g>
 </g>
-<g class="wisp" fill="url(#clf)" opacity=".7"><ellipse cx="60" cy="214" rx="190" ry="26"/><ellipse cx="190" cy="132" rx="150" ry="18"/><ellipse cx="-40" cy="160" rx="160" ry="20"/></g>
+<g class="wisp" filter="url(#soft)"><ellipse cx="40" cy="214" rx="170" ry="9" fill="#ffd98a" opacity=".1"/><ellipse cx="200" cy="128" rx="130" ry="7" fill="#ffd98a" opacity=".08"/></g>
 <g class="flock" fill="#030407" stroke="#6a7894" stroke-opacity=".4" stroke-width=".7" stroke-linejoin="round">${flockMarkup}</g>
 </svg>
 <svg y="55%" width="100%" height="45%" viewBox="0 0 2400 450" preserveAspectRatio="xMidYMax slice" overflow="visible">
@@ -323,8 +342,8 @@ ${mid.beacons.slice(0, 4).map((b, i) => beacon(b, i + 1)).join('')}
 <svg width="100%" height="100%" viewBox="0 0 320 1000" preserveAspectRatio="xMaxYMax meet" overflow="visible">
 <path d="${tower.join('')}" fill="#030406"/>
 <path d="${towerWindows}" fill="#f0a848" opacity=".5"/>
-<path d="${watcher}" fill="#010203"/>
-<g class="cape"><path d="${capeTail}" fill="#010203"/></g>
+<g transform="translate(${n(FIG_T[0])} ${n(FIG_T[1])}) scale(${FIG_S})" fill="#020305"><path d="${FIGURE.gargoyle}"/><path d="${FIGURE.cornice}"/></g>
+${figureAt('#ffcf63', -1.2, -0.5)}${figureAt('#010203', 0, 0)}
 </svg>`,
   rain: `<svg width="100%" height="100%" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice"><g transform="rotate(12 200 200)"><g class="ra"><rect x="-300" y="-520" width="1000" height="1320" fill="url(#rainA)" opacity=".15"/></g><g class="rb"><rect x="-300" y="-700" width="1000" height="1500" fill="url(#rainB)" opacity=".12"/></g></g></svg>`,
   tail: `<rect width="100%" height="100%" fill="url(#vig)"/>`,
@@ -362,7 +381,7 @@ const MOTION = `
 .fk{animation:fk 40s steps(1) ${DL} infinite}
 .k1{animation-duration:45s}.k2{animation-duration:36s;--d:-11s}.k3{animation-duration:60s;--d:-23s}
 @keyframes fk{0%,58%{opacity:1}59%,73%{opacity:0}74%,100%{opacity:1}}
-.cape{transform-box:view-box;transform-origin:227px 570px;animation:cape 5s ease-in-out ${DL} infinite alternate}
+.cape{transform-box:view-box;transform-origin:${n(FIG_T[0] + 108 * FIG_S)}px ${n(FIG_T[1] + 72 * FIG_S)}px;animation:cape 5s ease-in-out ${DL} infinite alternate}
 @keyframes cape{from{transform:skewX(-5deg) scaleX(.96)}to{transform:skewX(4deg) scaleX(1.05)}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
 `.replace(/\n/g, '')
