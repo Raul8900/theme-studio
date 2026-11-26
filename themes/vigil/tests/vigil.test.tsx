@@ -312,3 +312,62 @@ test('the right-click row flips the backdrop, and stays off links, selections an
     await busy.unmount()
   }
 })
+
+const WALL = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 56" preserveAspectRatio="xMidYMid slice" width="100%" height="100%"><path d="M0 0h100v56H0z" fill="#101317"/></svg>'
+
+test('/vigil wallpaper reads a vector wallpaper, keeps it, and draws it with rain', async ($, on) => {
+  const { themes } = engine(on)
+  const reads: unknown[] = []
+  on('env.get', () => ({ value: '/Users/me' }))
+  on('fs.read', (_, e) => {
+    reads.push(e)
+
+    return { value: WALL }
+  })
+  await $.session.start(START)
+
+  const done = await $.command.run({ ...COMMAND, args: 'wallpaper ~/walls/night.svg' })
+  expect(JSON.stringify(reads)).toContain('/Users/me/walls/night.svg')
+  expect(done.text).toContain('your wallpaper')
+  expect(themes.at(-1)?.backdrop).toMatchObject({ scene: 'vigil-wallpaper' })
+
+  const phone = await $.ui.mount({ ...BACKDROP, surface: 'mobile', props: { ...BACKDROP.props, scene: 'vigil-wallpaper' } })
+  const wet = await sourceOf(phone)
+  expect(wet).toContain('<path d="M0 0h100v56H0z" fill="#101317"/>')
+  expect(wet).toContain('class="ra"')
+  expect(wet).toContain('id="rainA"')
+  await phone.unmount()
+
+  const desk = await $.ui.mount({ ...BACKDROP, surface: 'desktop', props: { ...BACKDROP.props, scene: 'vigil-wallpaper' } })
+  expect(await desk.find({ type: 'Shader' })).toBeDefined()
+  expect(await sourceOf(desk)).not.toContain('class="ra"')
+  await desk.unmount()
+
+  // The next session comes back to it, with no file to read.
+  await $.session.start(START)
+  expect(themes.at(-1)?.backdrop).toMatchObject({ scene: 'vigil-wallpaper' })
+})
+
+test('a file a backdrop would refuse is not taken as a wallpaper', async ($, on) => {
+  const { themes } = engine(on)
+  on('fs.read', () => ({ value: '<svg xmlns="http://www.w3.org/2000/svg"><image href="photo.png"/></svg>' }))
+  await $.session.start(START)
+  const count = themes.length
+
+  const told = await $.command.run({ ...COMMAND, args: 'wallpaper /tmp/photo.svg' })
+  expect(told.text).toContain("can't be a wallpaper")
+  expect(themes.length).toBe(count)
+})
+
+test('/vigil wallpaper with none kept says how to give it one', async ($, on) => {
+  engine(on)
+  await $.session.start(START)
+  const told = await $.command.run({ ...COMMAND, args: 'wallpaper' })
+  expect(told.text).toContain('/vigil wallpaper /path/to/wallpaper.svg')
+})
+
+test('a stored wallpaper mode with no wallpaper falls back to the moving city', async ($, on) => {
+  const { themes } = engine(on, { mode: 'wallpaper' })
+  await $.session.start(START)
+  expect(themes.at(-1)?.backdrop).toMatchObject({ scene: 'vigil-animated' })
+})

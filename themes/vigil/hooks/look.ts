@@ -42,7 +42,7 @@ export const { theme: COLORS, problems: PROBLEMS } = makeColors({
   },
 })
 
-export const SCENES = { animated: 'vigil-animated', still: 'vigil-still' } as const
+export const SCENES = { animated: 'vigil-animated', still: 'vigil-still', wallpaper: 'vigil-wallpaper' } as const
 
 // A light frost over the city in the palette's own panel color: enough to keep text crisp, little enough to see the city.
 const GLASS: ThemeBackdropGlass = { blur: 4, opacity: 0.38 }
@@ -74,8 +74,8 @@ export function lookFor(mode: VigilMode): ThemeSetArgs {
   }
 }
 
-export const MODES: readonly VigilMode[] = ['animated', 'still', 'plain']
+export const MODES: readonly VigilMode[] = ['animated', 'still', 'plain', 'wallpaper']
 
 export function isMode(value: unknown): value is VigilMode {
-  return value === 'animated' || value === 'still' || value === 'plain'
+  return value === 'animated' || value === 'still' || value === 'plain' || value === 'wallpaper'
 }

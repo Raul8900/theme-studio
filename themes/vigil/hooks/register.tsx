@@ -3,7 +3,7 @@ import type { EngineInterface, Register, ThemeResult } from 'claude-code'
 
 import type { VigilMode } from '../types'
 import { isMode, lookFor, PROBLEMS, SCENES } from './look'
-import { ALT, BURST_MS, sceneSource } from './scene'
+import { ALT, BURST_MS, sceneSource, WALLPAPER_ALT, wallpaperProblem, wallpaperSource } from './scene'
 
 const mode = atom({ plugin: 'vigil', key: 'mode' } as const, 'animated')
 const burst = atom({ plugin: 'vigil', key: 'burst' } as const, null)
@@ -29,6 +29,7 @@ const SAID: Record<VigilMode, string> = {
   animated: 'Vigil: the city moves. Rain, drifting cloud and mist, windows going on and off, an aircraft crossing.',
   still: 'Vigil: the city holds still. The same night, with nothing moving.',
   plain: 'Vigil: no picture, just the night sky. The colors stay.',
+  wallpaper: 'Vigil: your wallpaper, with rain falling over it. /vigil animated brings the city back.',
 }
 
 /** The terminal palette this plugin ships in themes/vigil.json, as /theme stores a choice of it. */
@@ -37,6 +38,7 @@ const TERMINAL_THEME = 'custom:vigil:vigil'
 const HELP = [
   '/vigil switches between the animated and the still city.',
   '/vigil animated, /vigil still or /vigil plain picks one.',
+  '/vigil wallpaper <file.svg> shows a vector wallpaper of your own, with rain over it; /vigil wallpaper alone brings back the last one.',
   "/vigil terminal turns on Vigil's colors in a terminal.",
   '/vigil status says what is drawing it.',
 ].join('\n')
@@ -73,6 +75,29 @@ async function show($: EngineInterface, next: VigilMode): Promise<ThemeResult> {
   return result
 }
 
+/**
+ * Reads a wallpaper from a path the person gave (`~` for their home folder),
+ * and keeps it in the store if a backdrop can draw it.
+ */
+async function loadWallpaper($: EngineInterface, given: string): Promise<string | null> {
+  let path = given.trim().replace(/^["']|["']$/g, '')
+  if (path.startsWith('~/')) path = `${(await $.env.get('HOME')) ?? '~'}${path.slice(1)}`
+  let text: string
+  try {
+    const read = await $.fs.read(path)
+    text = typeof read === 'string' ? read : ''
+  } catch {
+    return `Vigil couldn't read ${path}. Check the path, and that it's on the computer this session runs on.`
+  }
+  const problem = wallpaperProblem(text)
+  if (problem !== null) {
+    return `${path} can't be a wallpaper: ${problem}. tools/wallpaper.py in the theme's folder turns a picture into one that can.`
+  }
+  await $.store.set('wallpaper', text.trim())
+
+  return null
+}
+
 /** What `/vigil` with no word, or the menu row, switches to. */
 function flipped(current: VigilMode): VigilMode {
   return current === 'animated' ? 'still' : 'animated'
@@ -86,10 +111,11 @@ export const register: Register = on => {
     await $.command.register({
       name: 'vigil',
       description: 'Switch the Vigil backdrop between animated and still; terminal for its colors in a terminal',
-      argumentHint: '[animated|still|plain|terminal|status]',
+      argumentHint: '[animated|still|plain|wallpaper <file>|terminal|status]',
     })
     const stored = await $.store.get('mode')
-    const current: VigilMode = isMode(stored) ? stored : 'animated'
+    const hasWallpaper = typeof (await $.store.get('wallpaper')) === 'string'
+    const current: VigilMode = isMode(stored) && (stored !== 'wallpaper' || hasWallpaper) ? stored : 'animated'
     await update($, mode, () => current)
 
     // Only while the palette is being tuned: the one line that would make
@@ -123,6 +149,23 @@ export const register: Register = on => {
     const word = e.args.toLowerCase().replace(/[[\]<>(){}"'`]/g, ' ').trim()
     const current = await read($, mode)
     const surfaces = await $.session.surfaces()
+
+    if (word === 'wallpaper' || word.startsWith('wallpaper ')) {
+      const given = e.args.trim().replace(/^\[?wallpaper\]?\s*/i, '')
+      if (given !== '') {
+        const problem = await loadWallpaper($, given)
+        await note($, 'wallpaper', problem === null ? { isLoaded: true } : { isLoaded: false, reason: problem })
+        if (problem !== null) return { text: problem, isTextDisplayOnly: true }
+      } else if (typeof (await $.store.get('wallpaper')) !== 'string') {
+        return {
+          text: 'Give Vigil a wallpaper first: /vigil wallpaper /path/to/wallpaper.svg. It takes a vector SVG; tools/wallpaper.py in the theme\'s folder turns a picture into one.',
+          isTextDisplayOnly: true,
+        }
+      }
+      const set = await show($, 'wallpaper')
+
+      return { text: set.isDrawn ? SAID.wallpaper : `${SAID.wallpaper}\n${elsewhere(surfaces)}`, isTextDisplayOnly: true }
+    }
 
     if (word === 'terminal') {
       // /theme is where a custom theme is normally picked; where the setting
@@ -176,7 +219,7 @@ export const register: Register = on => {
     const { Box, Button, Text } = $.ui.resolve(e)
     const current = await read($, mode)
     const target = flipped(current)
-    const label = current === 'plain'
+    const label = current === 'plain' || current === 'wallpaper'
       ? 'Vigil: bring the city back'
       : target === 'still'
         ? 'Vigil: hold the city still'
@@ -196,8 +239,29 @@ export const register: Register = on => {
     if (e.surface !== 'desktop' && e.surface !== 'mobile') {
       return next(e)
     }
+    if (e.props.plugin !== 'vigil') {
+      return next(e)
+    }
+    if (e.props.scene === SCENES.wallpaper) {
+      const svg = await $.store.get('wallpaper')
+      if (typeof svg !== 'string') return next(e)
+      asked[e.surface] = (asked[e.surface] ?? 0) + 1
+      const phase = (await $.clock.now()) / 1000
+      if (e.surface === 'desktop') {
+        const { Shader, Svg } = $.ui.resolve(e)
+
+        return (
+          <Shader module="./rain.ts">
+            <Svg source={wallpaperSource(svg, { hasRain: false, phase })} alt={WALLPAPER_ALT} isInteractive />
+          </Shader>
+        )
+      }
+      const { Svg } = $.ui.resolve(e)
+
+      return <Svg source={wallpaperSource(svg, { hasRain: true, phase })} alt={WALLPAPER_ALT} isInteractive />
+    }
     const isMoving = e.props.scene === SCENES.animated
-    if (e.props.plugin !== 'vigil' || (!isMoving && e.props.scene !== SCENES.still)) {
+    if (!isMoving && e.props.scene !== SCENES.still) {
       return next(e)
     }
     asked[e.surface] = (asked[e.surface] ?? 0) + 1

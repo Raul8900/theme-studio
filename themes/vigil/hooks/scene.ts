@@ -1,8 +1,13 @@
 import type { VigilBurst } from '../types'
-import { BAT, MOTION, RAIN, SKY, TAIL } from './art'
+import { BAT, MOTION, RAIN, RAIN_DEFS, SKY, TAIL } from './art'
 
 export const ALT =
   'A gothic city at night in the rain: art deco towers with floodlit crowns, a cathedral, a domed hall and a clock tower under low cloud, windows lit here and there.'
+
+export const WALLPAPER_ALT = 'Your own wallpaper, with rain falling over it.'
+
+/** The most a backdrop drawing may hold, in characters. */
+export const SVG_LIMIT = 131072
 
 /** How long a flock that took off from a click stays in the drawing, in ms. */
 export const BURST_MS = 6000
@@ -71,4 +76,43 @@ function takeOff(burst: VigilBurst): { css: string; markup: string } {
     // A thin cold rim, as if from the moon, keeps them apart from the dark.
     markup: `<svg x="${x}%" y="${y}%" width="1" height="1" overflow="visible"><g fill="#030407" stroke="#6a7894" stroke-opacity=".55" stroke-width=".8" stroke-linejoin="round">${bats.join('')}</g></svg>`,
   }
+}
+
+/**
+ * A wallpaper of the person's own, drawn whole, with Vigil's rain over it.
+ * The wallpaper is nested as it is: its own viewBox and preserveAspectRatio
+ * decide how it fills the window.
+ */
+export function wallpaperSource(svg: string, { hasRain, phase }: { hasRain: boolean; phase: number }): string {
+  const t = (((phase % 3600) + 3600) % 3600).toFixed(2)
+  const rain = hasRain ? `<style>svg{--t:${t}s}${MOTION}</style>${RAIN_DEFS}` : ''
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">${rain}${svg.trim()}${hasRain ? RAIN : ''}</svg>`
+}
+
+/**
+ * Why a file can't be a wallpaper, or null when it can: a whole SVG document,
+ * pure vector (what a backdrop takes), and small enough to draw with the rain.
+ */
+export function wallpaperProblem(svg: string): string | null {
+  const text = svg.trim()
+  if (!/^<svg[\s>]/.test(text) || !text.endsWith('</svg>')) {
+    return 'it is not an SVG drawing (it should start with <svg and end with </svg>)'
+  }
+  const room = SVG_LIMIT - wallpaperSource('', { hasRain: true, phase: 0 }).length
+  if (text.length > room) {
+    return `it is ${text.length.toLocaleString('en')} characters, and a wallpaper can be ${room.toLocaleString('en')} at most`
+  }
+  const banned = /href|<image|feImage|foreignObject|data:|base64|@import|@font-face|CDATA|<!|<\?|\\|<script|\son[a-z]+\s*=/i.exec(text)
+  if (banned) {
+    return `it holds ${banned[0].trim()}, and a backdrop takes vector shapes only (no pictures, links or scripts)`
+  }
+  if (/url\((?!#)/.test(text)) {
+    return 'it points outside itself with url(), and a backdrop may only point inside itself'
+  }
+  if (/&(?!(amp|lt|gt|quot|apos);)/.test(text)) {
+    return 'it holds a character reference a backdrop refuses'
+  }
+
+  return null
 }
