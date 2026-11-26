@@ -381,8 +381,8 @@ const MOTION = `
 .fk{animation:fk 40s steps(1) ${DL} infinite}
 .k1{animation-duration:45s}.k2{animation-duration:36s;--d:-11s}.k3{animation-duration:60s;--d:-23s}
 @keyframes fk{0%,58%{opacity:1}59%,73%{opacity:0}74%,100%{opacity:1}}
-.cape{transform-box:view-box;transform-origin:${n(FIG_T[0] + 108 * FIG_S)}px ${n(FIG_T[1] + 72 * FIG_S)}px;animation:cape 5s ease-in-out ${DL} infinite alternate}
-@keyframes cape{from{transform:skewX(-5deg) scaleX(.96)}to{transform:skewX(4deg) scaleX(1.05)}}
+.cape{transform-box:fill-box;transform-origin:0 0;animation:cape 5s ease-in-out ${DL} infinite alternate}
+@keyframes cape{from{transform:rotate(-2deg)}to{transform:rotate(2.5deg)}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
 `.replace(/\n/g, '')
 
