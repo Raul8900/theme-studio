@@ -1,6 +1,6 @@
 # Vigil
 
-A dark theme for Claude Code, for a city that needs watching. Storm clouds hang low over a gothic skyline, and a searchlight lights the cloud base in gold. Rain falls through the beam, bats cross the light, and a cloaked figure keeps watch from a gargoyle at the edge of the frame.
+A dark theme for Claude Code, for a city that needs watching. Storm clouds hang low over a gothic skyline, and a searchlight lights the cloud base in gold. Rain falls through the beam, bats cross the light, and a stone gargoyle looks down from a tower at the edge of the frame.
 
 ![Vigil: a gothic city at night, a searchlight on the clouds](../../previews/vigil/vigil-scene.jpg)
 
@@ -62,7 +62,7 @@ Run `/theme` and pick **Vigil**. Claude Code's own colors turn to Vigil's: signa
 - **Click the sky.** In the animated city, clicking an empty part of the night sky sends a flock of bats up from that point.
 - **Respects Reduce Motion.** With Reduce Motion on, the city is drawn still and the shader stays off.
 - **Readable first.** Panels frost over the city in the palette's own blue-black. On every surface color in the palette, body text is at least 13.8:1, secondary text 8.8:1 and muted text 5.4:1. Code takes its colors from the theme: gold keywords, green strings, violet literals, rose names and amber variables.
-- **Fits any window.** The searchlight and the watcher stay pinned to the right edge, and the skyline stays along the bottom, from a phone held upright to an ultrawide monitor.
+- **Fits any window.** The searchlight and its tower stay pinned to the right edge, and the skyline stays along the bottom, from a phone held upright to an ultrawide monitor.
 
 The palette is dark only: blue-black stone, silver type and signal gold.
 

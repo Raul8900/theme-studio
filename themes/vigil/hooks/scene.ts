@@ -2,7 +2,7 @@ import type { VigilBurst } from '../types'
 import { BAT, BEAM_RAIN, HEAD, MIDDLE, MOTION, RAIN, TAIL } from './art'
 
 export const ALT =
-  'A gothic city at night in the rain: a searchlight lights the low clouds, bats cross the light, and a cloaked figure keeps watch from a gargoyle.'
+  'A gothic city at night in the rain: a searchlight lights the low clouds, bats cross the light, and a gargoyle looks down from a gothic tower.'
 
 /** How long a flock that took off from a click stays in the drawing, in ms. */
 export const BURST_MS = 6000
