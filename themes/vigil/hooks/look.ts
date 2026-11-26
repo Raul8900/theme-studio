@@ -44,8 +44,8 @@ export const { theme: COLORS, problems: PROBLEMS } = makeColors({
 
 export const SCENES = { animated: 'vigil-animated', still: 'vigil-still' } as const
 
-// Panels frost over the city with the palette's own panel color.
-const GLASS: ThemeBackdropGlass = { blur: 22, opacity: 0.66 }
+// A light frost over the city in the palette's own panel color: enough to keep text crisp, little enough to see the city.
+const GLASS: ThemeBackdropGlass = { blur: 4, opacity: 0.38 }
 
 /** The whole theme for one backdrop mode: the palette is the same in all three. */
 export function lookFor(mode: VigilMode): ThemeSetArgs {

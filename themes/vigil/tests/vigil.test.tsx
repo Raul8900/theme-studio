@@ -11,7 +11,7 @@ const BACKDROP = {
   plugin: 'vigil',
   component: 'Backdrop',
   requestId: 'backdrop',
-  props: { scene: 'vigil-animated', plugin: 'vigil', glass: { blur: 22, opacity: 0.66 } },
+  props: { scene: 'vigil-animated', plugin: 'vigil', glass: { blur: 4, opacity: 0.38 } },
 } as const
 
 /** The engine beneath the mod: themes set, commands registered, a store and a clock. */
@@ -50,7 +50,7 @@ test('a session opens on the moving city, in the dark palette', async ($, on) =>
   await $.session.start(START)
 
   const look = themes.at(-1)
-  expect(look?.backdrop).toMatchObject({ scene: 'vigil-animated', glass: { blur: 22, opacity: 0.66 } })
+  expect(look?.backdrop).toMatchObject({ scene: 'vigil-animated', glass: { blur: 4, opacity: 0.38 } })
   expect(look?.overrideColorScheme).toBe('dark')
   expect(look?.colors?.label).toBe('Vigil')
   expect(Object.keys(look?.colors?.inputs.dark ?? {}).length).toBeGreaterThan(90)
