@@ -1,5 +1,6 @@
 import type { VigilBurst } from '../types'
-import { BAT, MOTION, RAIN, RAIN_DEFS, SKY, TAIL } from './art'
+import { BAT, CLOCK_MOTION, HOUR_AT, MINUTE_AT, MOTION, RAIN, RAIN_DEFS, SKY, TAIL } from './art'
+import type { WallTime } from './clock'
 
 export const ALT =
   'A gothic city at night in the rain: art deco towers with floodlit crowns, a cathedral, a domed hall and a clock tower under low cloud, windows lit here and there.'
@@ -24,15 +25,27 @@ export type SceneOptions = {
   phase: number
   /** A click on the sky moments ago: bats take off from that point. */
   burst?: VigilBurst | null
+  /** The time the clock tower shows; its hands turn on from there. */
+  clock?: WallTime
 }
 
 /** The whole scene as one SVG document, sized to fill whatever box holds it. */
-export function sceneSource({ isMoving, hasRain, phase, burst }: SceneOptions): string {
+export function sceneSource({ isMoving, hasRain, phase, burst, clock }: SceneOptions): string {
   const flight = isMoving && burst ? takeOff(burst) : null
+  // The hands start at the time, and the clock keeps running even when the
+  // city is held still: a stopped clock would be wrong twice a day at best.
+  const time = clock ?? { h: 10, m: 10, s: 0 }
+  const intoHour = time.m * 60 + time.s
+  const intoTwelve = (time.h % 12) * 3600 + intoHour
+  const hands = `--ch:${intoTwelve.toFixed(1)}s;--cm:${intoHour.toFixed(1)}s`
   const style = isMoving
-    ? `<style>svg{--t:${(((phase % 3600) + 3600) % 3600).toFixed(2)}s}${MOTION}${flight?.css ?? ''}</style>`
-    : ''
-  const body = SKY + (hasRain ? RAIN : '') + TAIL + (flight?.markup ?? '')
+    ? `<style>svg{--t:${(((phase % 3600) + 3600) % 3600).toFixed(2)}s;${hands}}${MOTION}${CLOCK_MOTION}${flight?.css ?? ''}</style>`
+    : `<style>svg{${hands}}${CLOCK_MOTION}</style>`
+  const sky = SKY.replace(HOUR_AT, `rotate(${((intoTwelve / 43200) * 360).toFixed(2)} 289 652)`).replace(
+    MINUTE_AT,
+    `rotate(${((intoHour / 3600) * 360).toFixed(2)} 289 652)`,
+  )
+  const body = sky + (hasRain ? RAIN : '') + TAIL + (flight?.markup ?? '')
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">${style}${body}</svg>`
 }

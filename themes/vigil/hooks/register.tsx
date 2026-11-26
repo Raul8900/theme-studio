@@ -3,6 +3,7 @@ import type { EngineInterface, Register, ThemeResult } from 'claude-code'
 
 import type { VigilMode } from '../types'
 import { isMode, lookFor, PROBLEMS, SCENES } from './look'
+import { readOut, wallTime, zoneProblem } from './clock'
 import { ALT, BURST_MS, sceneSource, WALLPAPER_ALT, wallpaperProblem, wallpaperSource } from './scene'
 
 const mode = atom({ plugin: 'vigil', key: 'mode' } as const, 'animated')
@@ -39,6 +40,7 @@ const HELP = [
   '/vigil switches between the animated and the still city.',
   '/vigil animated, /vigil still or /vigil plain picks one.',
   '/vigil wallpaper <file.svg> shows a vector wallpaper of your own, with rain over it; /vigil wallpaper alone brings back the last one.',
+  '/vigil clock <time zone> sets the clock tower to your time (Asia/Tokyo, +05:30); /vigil clock local follows this computer.',
   "/vigil terminal turns on Vigil's colors in a terminal.",
   '/vigil status says what is drawing it.',
 ].join('\n')
@@ -111,7 +113,7 @@ export const register: Register = on => {
     await $.command.register({
       name: 'vigil',
       description: 'Switch the Vigil backdrop between animated and still; terminal for its colors in a terminal',
-      argumentHint: '[animated|still|plain|wallpaper <file>|terminal|status]',
+      argumentHint: '[animated|still|plain|wallpaper <file>|clock <zone>|terminal|status]',
     })
     const stored = await $.store.get('mode')
     const hasWallpaper = typeof (await $.store.get('wallpaper')) === 'string'
@@ -149,6 +151,32 @@ export const register: Register = on => {
     const word = e.args.toLowerCase().replace(/[[\]<>(){}"'`]/g, ' ').trim()
     const current = await read($, mode)
     const surfaces = await $.session.surfaces()
+
+    if (word === 'clock' || word.startsWith('clock ')) {
+      const given = e.args.trim().replace(/^\[?clock\]?\s*/i, '').replace(/^["'\[]|["'\]]$/g, '').trim()
+      const now = await $.clock.now()
+      if (given === '') {
+        const kept = await $.store.get('clockZone')
+        const zone = typeof kept === 'string' ? kept : undefined
+        const where = zone === undefined ? "this computer's time" : `${zone} time`
+
+        return { text: `Vigil: the clock tower shows ${readOut(wallTime(now, zone))}, ${where}. /vigil clock <time zone> changes it.`, isTextDisplayOnly: true }
+      }
+      if (given.toLowerCase() === 'local') {
+        await $.store.delete('clockZone')
+      } else {
+        const problem = zoneProblem(given)
+        if (problem !== null) return { text: problem, isTextDisplayOnly: true }
+        await $.store.set('clockZone', given)
+      }
+      if (current === 'animated' || current === 'still') await show($, current)
+      const zone = given.toLowerCase() === 'local' ? undefined : given
+
+      return {
+        text: `Vigil: the clock tower keeps ${zone === undefined ? "this computer's" : zone} time, ${readOut(wallTime(now, zone))} now.`,
+        isTextDisplayOnly: true,
+      }
+    }
 
     if (word === 'wallpaper' || word.startsWith('wallpaper ')) {
       const given = e.args.trim().replace(/^\[?wallpaper\]?\s*/i, '')
@@ -269,6 +297,8 @@ export const register: Register = on => {
     const last = await read($, burst)
     const flight = isMoving && last !== null && now - last.at < BURST_MS ? last : null
     const phase = now / 1000
+    const kept = await $.store.get('clockZone')
+    const clock = wallTime(now, typeof kept === 'string' ? kept : undefined)
 
     // On desktop the moving city rains on the GPU, lit by its own light. Where
     // the shader can't play (Reduce Motion, an older app, a refusal) the
@@ -278,13 +308,13 @@ export const register: Register = on => {
 
       return (
         <Shader module="./rain.ts">
-          <Svg source={sceneSource({ isMoving, hasRain: false, phase, burst: flight })} alt={ALT} isInteractive />
+          <Svg source={sceneSource({ isMoving, hasRain: false, phase, burst: flight, clock })} alt={ALT} isInteractive />
         </Shader>
       )
     }
     const { Svg } = $.ui.resolve(e)
 
-    return <Svg source={sceneSource({ isMoving, hasRain: true, phase, burst: flight })} alt={ALT} isInteractive />
+    return <Svg source={sceneSource({ isMoving, hasRain: true, phase, burst: flight, clock })} alt={ALT} isInteractive />
   })
 
   // A click on the bare night sky sends a flock of bats up from that point.

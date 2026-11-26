@@ -182,8 +182,9 @@ test('the city draws on desktop and mobile, moving or still', async ($, on) => {
     const held = await $.ui.mount({ ...BACKDROP, surface, props: { ...BACKDROP.props, scene: 'vigil-still' } })
     const still = await sourceOf(held)
     expect(still).toContain('<path')
-    expect(still).not.toContain('<style')
-    expect(still).not.toContain('@keyframes')
+    // Nothing moves but the clock's hands.
+    expect(still).not.toContain('@keyframes drift')
+    expect(still).toContain('@keyframes hand')
     await held.unmount()
   }
 })
@@ -370,4 +371,40 @@ test('a stored wallpaper mode with no wallpaper falls back to the moving city', 
   const { themes } = engine(on, { mode: 'wallpaper' })
   await $.session.start(START)
   expect(themes.at(-1)?.backdrop).toMatchObject({ scene: 'vigil-animated' })
+})
+
+test('the clock tower shows the time where the person is', async ($, on) => {
+  // The mocked clock reads 00:30:00 UTC.
+  engine(on, { clockZone: 'UTC' })
+  const utc = await $.ui.mount({ ...BACKDROP, surface: 'mobile' })
+  const atUtc = await sourceOf(utc)
+  expect(atUtc).toContain('<g class="hh" transform="rotate(15.00 289 652)">')
+  expect(atUtc).toContain('<g class="mh" transform="rotate(180.00 289 652)">')
+  expect(atUtc).toContain('--ch:1800.0s;--cm:1800.0s')
+  await utc.unmount()
+})
+
+test('a fixed offset moves the hands with it', async ($, on) => {
+  engine(on, { clockZone: '+05:30' })
+  const ui = await $.ui.mount({ ...BACKDROP, surface: 'desktop', props: { ...BACKDROP.props, scene: 'vigil-still' } })
+  const six = await sourceOf(ui)
+  expect(six).toContain('<g class="hh" transform="rotate(180.00 289 652)">')
+  expect(six).toContain('<g class="mh" transform="rotate(0.00 289 652)">')
+  await ui.unmount()
+})
+
+test('/vigil clock sets the time zone, and refuses one that is not', async ($, on) => {
+  const { themes } = engine(on)
+  await $.session.start(START)
+
+  const wrong = await $.command.run({ ...COMMAND, args: 'clock Mars/Olympus' })
+  expect(wrong.text).toContain('not a time zone')
+
+  const count = themes.length
+  const tokyo = await $.command.run({ ...COMMAND, args: 'clock Asia/Tokyo' })
+  expect(tokyo.text).toContain('Asia/Tokyo time, 9:30 now')
+  expect(themes.length).toBe(count + 1)
+
+  const asked = await $.command.run({ ...COMMAND, args: 'clock' })
+  expect(asked.text).toContain('shows 9:30, Asia/Tokyo time')
 })

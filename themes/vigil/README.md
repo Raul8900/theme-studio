@@ -42,6 +42,7 @@ Switch between them:
 - `/vigil` switches between animated and still.
 - `/vigil animated`, `/vigil still` or `/vigil plain` picks one.
 - `/vigil wallpaper <file.svg>` shows a wallpaper of your own, with the rain over it (see below).
+- `/vigil clock Asia/Tokyo` (any time zone name, or an offset like `+05:30`) sets the clock tower to your time; `/vigil clock local` follows the computer Claude Code runs on, the default.
 - `/vigil terminal` tells you how to turn on Vigil's colors in a terminal (`/theme`, then **Vigil**).
 - In the desktop app, right-click an empty part of the conversation and choose **Vigil: hold the city still** (or **let the city move**).
 
@@ -82,6 +83,7 @@ Run `/theme` and pick **Vigil**. Claude Code's own colors turn to Vigil's: signa
 - **Click the sky.** In the animated city, clicking an empty part of the night sky sends a flock of bats up from that point.
 - **Respects Reduce Motion.** With Reduce Motion on, the city is drawn still and the shader stays off.
 - **Readable first.** Panels frost over the city in the palette's own blue-black. On every surface color in the palette, body text is at least 13.8:1, secondary text 8.8:1 and muted text 5.4:1. Code takes its colors from the theme: gold keywords, green strings, violet literals, rose names and amber variables.
+- **A clock that keeps time.** The clock tower's hands show the real time and turn on their own, even when the city is held still.
 - **Fits any window.** The clock tower stays pinned to the right edge, and the skyline stays along the bottom, from a phone held upright to an ultrawide monitor.
 
 The palette is dark only: blue-black stone, silver type and signal gold.
