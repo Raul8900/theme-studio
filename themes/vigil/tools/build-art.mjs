@@ -78,9 +78,7 @@ const tower = [
 // Coursing: faint joints in the stone, and quoins up both corners.
 const masonry = []
 for (let y = 612; y < 1116; y += 11) {
-  if (y > 606 && y < 704) {
-    masonry.push(R(238, y, 245, y + 0.5), R(333, y, 340, y + 0.5))
-  } else masonry.push(R(238, y, 340, y + 0.5))
+  masonry.push(R(238, y, 340, y + 0.5))
 }
 for (let y = 470; y < 598; y += 11) masonry.push(R(244, y, 258, y + 0.5), R(320, y, 334, y + 0.5))
 const quoins = []
@@ -94,13 +92,6 @@ const gilt = [
 const giltDots = [[246, 374, 1.6], [332, 374, 1.6], [289, 224, 2.3]]
   .map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join('')
 
-// The clock's panel: a slightly paler stone square with a gilt rule and a
-// gilt quatrefoil in each corner.
-const panel = R(245, 611, 333, 699)
-const panelRule = R(248, 614, 330, 696)
-const quatrefoil = (x, y, r) => [[0, -r], [r, 0], [0, r], [-r, 0]]
-  .map(([dx, dy]) => `<circle cx="${n(x + dx * 0.55)}" cy="${n(y + dy * 0.55)}" r="${n(r * 0.55)}"/>`).join('')
-const quatrefoils = [[253.5, 619.5], [324.5, 619.5], [253.5, 690.5], [324.5, 690.5]].map(([x, y]) => quatrefoil(x, y, 4)).join('')
 
 // Windows: warm glass, then tracery in the stone's colour over it.
 const belfry = [[260, 478, 18, 100], [300, 478, 18, 100]]
@@ -254,9 +245,6 @@ ${cityBand}
 <path d="${masonry.join('')}" fill="#10141c"/>
 <path d="${quoins.join('')}" fill="#0f131a"/>
 <path d="M238 600h1.4v520h-1.4zM224 880h1.2v240h-1.2zM244 463h1.2v137h-1.2zM338.6 600h1.4v520h-1.4z" fill="#33415c" opacity=".55"/>
-<path d="${panel}" fill="#0b0e15"/>
-<path d="${panelRule}" fill="none" stroke="url(#gilt)" stroke-width=".7" opacity=".55"/>
-<g fill="url(#gilt)" opacity=".6">${quatrefoils}</g>
 <path d="${gilt}" fill="url(#gilt)" opacity=".7"/>
 <g fill="url(#gilt)">${giltDots}</g>
 <path d="${towerLit}" fill="#e9a451" opacity=".55"/>
