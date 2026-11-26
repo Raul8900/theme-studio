@@ -84,9 +84,12 @@ for (const x of [258, 296]) for (let y = 500; y < 576; y += 7) louvres.push(R(x,
 // minute track, Roman numerals set radially, and ornate hands. Its hands are
 // placed at the real time when the scene is drawn (HOUR_AT, MINUTE_AT and
 // SECOND_AT stand in for their angles) and turn on from there: CLOCK_MOTION.
-const CX = 280
-const CY = 654
-const CR = 31
+// The tower is drawn at its own coordinates and moved in from the edge by
+// TOWER_SHIFT, so it shows whole; the clock is centred on its shaft.
+const TOWER_SHIFT = -20
+const CX = 289 + TOWER_SHIFT
+const CY = 655
+const CR = 36
 const HOUR_AT = `rotate(-1001 ${CX} ${CY})`
 const MINUTE_AT = `rotate(-1002 ${CX} ${CY})`
 const SECOND_AT = `rotate(-1003 ${CX} ${CY})`
@@ -116,32 +119,31 @@ const clock = (() => {
   const bold = []
   for (let i = 0; i < 60; i++) {
     const a = (Math.PI * 2 * i) / 60 - Math.PI / 2
-    const [r0, r1] = i % 5 === 0 ? [CR - 7, CR - 2.2] : [CR - 4.6, CR - 2.2]
+    const [r0, r1] = i % 5 === 0 ? [CR - 8.4, CR - 2.4] : [CR - 5.2, CR - 2.4]
     ;(i % 5 === 0 ? bold : marks).push(`M${n(CX + Math.cos(a) * r0)} ${n(CY + Math.sin(a) * r0)}L${n(CX + Math.cos(a) * r1)} ${n(CY + Math.sin(a) * r1)}`)
   }
   const names = ['XII', 'I', 'II', 'III', 'IIII', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI']
   const numerals = names
-    .map((name, i) => `<path transform="rotate(${i * 30} ${CX} ${CY}) translate(${CX} ${n(CY - CR + 12.2)})" d="${numeral(name, 4.6)}"/>`)
+    .map((name, i) => `<path transform="rotate(${i * 30} ${CX} ${CY}) translate(${CX} ${n(CY - CR + 14)})" d="${numeral(name, 6.4)}"/>`)
     .join('')
   // Hands, each drawn pointing at twelve from the centre.
-  const hour = `M${CX - 1.3} ${CY + 5}L${CX - 1.1} ${CY - 7}L${CX - 2.6} ${CY - 10.5}L${CX} ${CY - 16.5}L${CX + 2.6} ${CY - 10.5}L${CX + 1.1} ${CY - 7}L${CX + 1.3} ${CY + 5}Z`
-    + `M${CX - 1} ${CY - 10.5}L${CX} ${CY - 13.6}L${CX + 1} ${CY - 10.5}L${CX} ${CY - 8.8}Z`
-  const minute = `M${CX - 0.9} ${CY + 7}L${CX - 0.55} ${CY - CR + 7}L${CX} ${CY - CR + 3.4}L${CX + 0.55} ${CY - CR + 7}L${CX + 0.9} ${CY + 7}Z`
-  const second = `M${CX - 0.28} ${CY + 9}V${CY - CR + 3}H${CX + 0.28}V${CY + 9}Z`
+  const hour = `M${CX - 1.8} ${CY + 6}L${CX - 1.5} ${CY - 9}L${CX - 3.6} ${CY - 13.5}L${CX} ${CY - 21}L${CX + 3.6} ${CY - 13.5}L${CX + 1.5} ${CY - 9}L${CX + 1.8} ${CY + 6}Z`
+  const minute = `M${CX - 1.25} ${CY + 8}L${CX - 0.8} ${CY - CR + 8.5}L${CX} ${CY - CR + 3.6}L${CX + 0.8} ${CY - CR + 8.5}L${CX + 1.25} ${CY + 8}Z`
+  const second = `M${CX - 0.4} ${CY + 10}V${CY - CR + 3.2}H${CX + 0.4}V${CY + 10}Z`
   return [
     `<circle cx="${CX}" cy="${CY}" r="${CR + 6}" fill="#05060a"/>`,
     `<circle cx="${CX}" cy="${CY}" r="${CR + 5.2}" fill="none" stroke="#1c2029" stroke-width="1.2"/>`,
     `<circle cx="${CX}" cy="${CY}" r="${CR + 1.3}" fill="none" stroke="url(#gilt)" stroke-width="2"/>`,
     `<circle cx="${CX}" cy="${CY}" r="${CR}" fill="url(#clockface)"/>`,
-    `<g fill="none" stroke="#3a2610"><circle cx="${CX}" cy="${CY}" r="${CR - 2.2}" stroke-width=".45" opacity=".6"/><circle cx="${CX}" cy="${CY}" r="${CR - 7}" stroke-width=".45" opacity=".5"/><circle cx="${CX}" cy="${CY}" r="${CR - 17}" stroke-width=".35" opacity=".35"/>`,
-    `<path d="${marks.join('')}" stroke-width=".45" stroke-linecap="round"/><path d="${bold.join('')}" stroke-width="1.15" stroke-linecap="round"/></g>`,
-    `<g fill="none" stroke="#2a1a08" stroke-width=".62" stroke-linecap="square">${numerals}</g>`,
+    `<g fill="none" stroke="#3a2610"><circle cx="${CX}" cy="${CY}" r="${CR - 2.4}" stroke-width=".8" opacity=".7"/>`,
+    `<path d="${marks.join('')}" stroke-width=".75" stroke-linecap="round"/><path d="${bold.join('')}" stroke-width="1.7" stroke-linecap="round"/></g>`,
+    `<g fill="none" stroke="#2a1a08" stroke-width=".95" stroke-linecap="square">${numerals}</g>`,
     // A reflection on the glass, top left.
     `<path d="M${n(CX - CR * 0.72)} ${n(CY - CR * 0.25)}A${n(CR * 0.8)} ${n(CR * 0.8)} 0 0 1 ${n(CX + CR * 0.1)} ${n(CY - CR * 0.78)}" stroke="#fffaf0" stroke-opacity=".22" stroke-width="2.4" stroke-linecap="round" fill="none"/>`,
     `<g class="hh" transform="${HOUR_AT}"><path d="${hour}" fill="#1b1209"/></g>`,
-    `<g class="mh" transform="${MINUTE_AT}"><path d="${minute}" fill="#1b1209"/><circle cx="${CX}" cy="${CY + 7}" r="1.5" fill="#1b1209"/></g>`,
-    `<g class="sh" transform="${SECOND_AT}"><path d="${second}" fill="#8a2a1c"/><circle cx="${CX}" cy="${CY + 8.6}" r="1" fill="#8a2a1c"/></g>`,
-    `<circle cx="${CX}" cy="${CY}" r="2.4" fill="url(#gilt)"/><circle cx="${CX}" cy="${CY}" r=".9" fill="#1b1209"/>`,
+    `<g class="mh" transform="${MINUTE_AT}"><path d="${minute}" fill="#1b1209"/><circle cx="${CX}" cy="${CY + 8}" r="2" fill="#1b1209"/></g>`,
+    `<g class="sh" transform="${SECOND_AT}"><path d="${second}" fill="#8a2a1c"/><circle cx="${CX}" cy="${CY + 9.6}" r="1.3" fill="#8a2a1c"/></g>`,
+    `<circle cx="${CX}" cy="${CY}" r="3" fill="url(#gilt)"/><circle cx="${CX}" cy="${CY}" r="1.1" fill="#1b1209"/>`,
   ].join('')
 })()
 // --ch, --cm and --cs are the seconds into the twelve hours, the hour and the minute.
@@ -233,11 +235,12 @@ const PARTS = {
 ${cityBand}
 </svg>
 <svg width="100%" height="100%" viewBox="0 0 320 1000" preserveAspectRatio="xMaxYMax meet" overflow="visible">
-<circle cx="${CX}" cy="${CY}" r="74" fill="url(#clockglow)"/>
+<g transform="translate(${TOWER_SHIFT} 0)">
 <path d="${tower}" fill="#030406"/>
-<path d="M238 600h1.4v520h-1.4zM224 880h1.2v240h-1.2zM244 463h1.2v137h-1.2z" fill="#33415c" opacity=".5"/>
+<path d="M238 600h1.4v520h-1.4zM224 880h1.2v240h-1.2zM244 463h1.2v137h-1.2zM338.6 463h1.4v657h-1.4z" fill="#33415c" opacity=".5"/>
 <path d="${towerLit}" fill="#e9a451" opacity=".55"/>
 <path d="${louvres.join('')}" fill="#030406"/>
+</g>
 ${clock}
 </svg>`,
   rain: `<svg width="100%" height="100%" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice"><g transform="rotate(12 200 200)"><g class="ra"><rect x="-300" y="-520" width="1000" height="1320" fill="url(#rainA)" opacity=".15"/></g><g class="rb"><rect x="-300" y="-700" width="1000" height="1500" fill="url(#rainB)" opacity=".12"/></g></g></svg>`,
